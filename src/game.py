@@ -34,7 +34,6 @@ class TexasHoldem:
         self.big_blind = 20
         
     def reset_hand(self):
-        """Reset the game state for a new hand"""
         self.deck.reset()
         self.community_cards = []
         self.current_stage = GameStage.PREFLOP
@@ -48,11 +47,9 @@ class TexasHoldem:
             player.is_active = True
             
     def move_button(self):
-        """Move the dealer button to the next position"""
         self.button_position = (self.button_position + 1) % 6
         
     def deal_hole_cards(self):
-        """Deal two cards to each player"""
         # Deal first card to each player
         for i in range(6):
             player_idx = (self.button_position + i + 1) % 6
@@ -68,7 +65,6 @@ class TexasHoldem:
                 self.players[player_idx].add_pocket_card(card)
     
     def deal_flop(self):
-        """Deal the flop (first three community cards)"""
         if self.current_stage != GameStage.PREFLOP:
             raise ValueError("Cannot deal flop - incorrect game stage")
             
@@ -84,7 +80,6 @@ class TexasHoldem:
         self.current_stage = GameStage.FLOP
         
     def deal_turn(self):
-        """Deal the turn (fourth community card)"""
         if self.current_stage != GameStage.FLOP:
             raise ValueError("Cannot deal turn - incorrect game stage")
             
@@ -99,7 +94,6 @@ class TexasHoldem:
         self.current_stage = GameStage.TURN
         
     def deal_river(self):
-        """Deal the river (fifth community card)"""
         if self.current_stage != GameStage.TURN:
             raise ValueError("Cannot deal river - incorrect game stage")
             
@@ -118,7 +112,6 @@ class TexasHoldem:
         return [player for player in self.players if player.is_active]
         
     def get_player_position(self, player_idx: int) -> str:
-        """Return the position name for a given player index relative to the button"""
         positions = {
             0: "Button",
             1: "Small Blind",
@@ -149,14 +142,11 @@ class TexasHoldem:
         self.pot += self.big_blind
         self.current_bet = self.big_blind
         
-        # Set first to act (UTG)
         self.current_player_idx = (self.button_position + 3) % 6
         self.last_bettor_idx = None
         self.min_raise = self.big_blind
-        # Dictionary to track each player's contribution to current street
         self.street_contributions = {i: 0 for i in range(6)}
         
-        # Post blinds
         self.street_contributions[sb_pos] = self.small_blind
         self.street_contributions[bb_pos] = self.big_blind
         
@@ -165,12 +155,10 @@ class TexasHoldem:
         actions = [Action.FOLD]
         player = self.players[self.current_player_idx]
         
-        # If there's no current bet, player can check
         if self.current_bet == 0:
             actions.append(Action.CHECK)
             actions.append(Action.BET)
         else:
-            # If there's a bet, player can call or raise
             call_amount = self.current_bet - getattr(player, 'current_bet', 0)
             if call_amount < player.chips:
                 actions.append(Action.CALL)
@@ -188,6 +176,7 @@ class TexasHoldem:
         elif action == Action.CHECK:
             if self.current_bet != 0:
                 raise ValueError("Cannot check when there's a bet")
+            self.street_contributions[self.current_player_idx] = 0
                 
         elif action == Action.CALL:
             current_contribution = self.street_contributions[self.current_player_idx]
@@ -212,14 +201,12 @@ class TexasHoldem:
             if amount < min_amount:
                 raise ValueError(f"Minimum {action.value} is {min_amount}")
                 
-            # Calculate total chips needed considering previous contribution
             current_contribution = self.street_contributions[self.current_player_idx]
             total_needed = amount - current_contribution
             
             if total_needed > player.chips:
                 raise ValueError("Not enough chips")
                 
-            # Update the pot and player chips
             player.chips -= total_needed
             self.pot += total_needed
             self.current_bet = amount
@@ -227,10 +214,8 @@ class TexasHoldem:
             self.last_bettor_idx = self.current_player_idx
             self.min_raise = amount - self.current_bet
             
-        # Move to next active player
         self.move_to_next_player()
         
-        # Check if betting round is complete
         return self.is_betting_round_complete()
         
     def move_to_next_player(self):
@@ -244,31 +229,46 @@ class TexasHoldem:
                 break
                 
     def is_betting_round_complete(self) -> bool:
-        """Check if the current betting round is complete"""
         active_players = self.get_active_players()
+        
         if len(active_players) == 1:
             return True
-            
-        # Round is complete if we're back to the last bettor
-        # or everyone has had a chance to act and all bets are called
-        if self.last_bettor_idx is None:
-            # No bets made - check if everyone has acted
-            return all(hasattr(p, 'current_bet') for p in active_players)
+
+        first_to_act = None
+        if self.current_stage != GameStage.PREFLOP:
+            idx = (self.button_position + 1) % 6
+            while first_to_act is None:
+                if self.players[idx].is_active:
+                    first_to_act = idx
+                idx = (idx + 1) % 6
         else:
-            next_idx = (self.last_bettor_idx + 1) % 6
-            return (self.current_player_idx == next_idx and 
-                   all(getattr(p, 'current_bet', 0) == self.current_bet 
-                       for p in active_players))
+            first_to_act = (self.button_position + 3) % 6 
+        
+        bb_pos = (self.button_position + 2) % 6
+        
+        if self.current_bet == 0:
+            return (self.current_player_idx == first_to_act and 
+                    all(self.street_contributions[i] >= 0 for i in range(6) if self.players[i].is_active))
+        else:
+            all_matched = all(self.street_contributions[i] == self.current_bet 
+                            for i in range(6) if self.players[i].is_active)
+            
+            if (self.current_stage == GameStage.PREFLOP and 
+                self.current_bet == self.big_blind and 
+                self.players[bb_pos].is_active and
+                all_matched and 
+                self.last_bettor_idx is None): 
+                return self.current_player_idx != bb_pos
+                
+            return all_matched
                        
     def reset_street_bets(self):
-        """Reset the betting tracking for a new street"""
         self.current_bet = 0
         self.last_bettor_idx = None
         self.street_contributions = {i: 0 for i in range(6)}
         self.current_player_idx = (self.button_position + 1) % 6
 
     def play_betting_round(self):
-        """Play a complete betting round"""
         while True:
             player = self.players[self.current_player_idx]
             if not player.is_active:
@@ -303,7 +303,6 @@ class TexasHoldem:
                     continue
                     
     def play_hand(self):
-        """Play a complete hand"""
         self.start_new_hand()
         
         # Preflop
@@ -346,7 +345,6 @@ class TexasHoldem:
                 print(f"{player.name}'s hand: {cards}")
                 
     def get_betting_info(self) -> str:
-        """Return a string showing current street contributions"""
         active_player = self.players[self.current_player_idx]
         current_contribution = self.street_contributions[self.current_player_idx]
         to_call = max(0, self.current_bet - current_contribution)
@@ -360,7 +358,6 @@ class TexasHoldem:
         return "\n".join(info)
 
     def get_hand_summary(self) -> str:
-        """Return a string summary of the current hand state"""
         summary = []
         summary.append(f"Stage: {self.current_stage.value}")
         summary.append(f"Pot: {self.pot}")
@@ -375,7 +372,6 @@ class TexasHoldem:
             position = self.get_player_position(i)
             pocket = " ".join(str(card) for card in player.pocket) if player.pocket else "XX"
             player_info = f"{player.name} ({position}): {pocket} - Chips: {player.chips}"
-            # Use ANSI escape codes to make folded players appear dimmer
             if not player.is_active:
                 player_info = "Folded"
             summary.append(player_info)
@@ -384,6 +380,4 @@ class TexasHoldem:
     
 players = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"]
 game = TexasHoldem(players)
-
-# Play a complete hand
 game.play_hand()
