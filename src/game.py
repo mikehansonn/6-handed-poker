@@ -503,6 +503,10 @@ class TexasHoldem:
             
         return "\n".join(summary)
     
-players = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"]
-game = TexasHoldem(players)
-game.play_hand()
+
+if __name__ == "__main__": 
+    
+    players = ["Alice", "Bob", "Charlie", "David", "Eve", "Frank"]
+    game = TexasHoldem(players)
+    game.play_hand()
+
