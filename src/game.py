@@ -2,6 +2,17 @@ from enum import Enum
 from typing import List, Optional
 from player import Player
 from deck import Deck
+import random
+
+class Pot:
+    def __init__(self):
+        self.amount = 0
+        self.eligible_players = set()
+        self.required_amount = 0 
+
+    def add_chips(self, amount: int, player_idx: int):
+        self.amount += amount
+        self.eligible_players.add(player_idx)
 
 class GameStage(Enum):
     PREFLOP = "preflop"
@@ -23,41 +34,79 @@ class TexasHoldem:
             raise ValueError("Texas Hold'em requires exactly 6 players")
         
         self.deck = Deck()
-        self.players = [Player(name, starting_chips) for name in player_names]
+        self.players = [Player(name, random.randint(100, 1000)) for name in player_names]
         self.community_cards = []
         self.current_stage = GameStage.PREFLOP
-        self.button_position = 0  # Dealer button position
+        self.button_position = 0
         self.current_player_idx = 0
-        self.pot = 0
+        self.pots = [Pot()]  # Main pot is always first
         self.current_bet = 0
         self.small_blind = 10
         self.big_blind = 20
+        self.all_in_players = set()  # Track players who are all-in
         
     def reset_hand(self):
         self.deck.reset()
         self.community_cards = []
         self.current_stage = GameStage.PREFLOP
-        self.pot = 0
+        self.pots = [Pot()]
         self.current_bet = 0
+        self.all_in_players = set()
         
-        # Clear all player hands
         for player in self.players:
             player.clear_pocket()
             player.clear_hand()
             player.is_active = True
-            
+
+    def get_total_pot(self) -> int:
+        return sum(pot.amount for pot in self.pots)
+    
+    def create_side_pot(self, all_in_amount: int):
+        new_pot = Pot()
+        excess_chips = 0
+
+        for i, player in enumerate(self.players):
+            if player.is_active and i not in self.all_in_players:
+                if self.street_contributions[i] > all_in_amount:
+                    excess = self.street_contributions[i] - all_in_amount
+                    self.street_contributions[i] = all_in_amount
+                    excess_chips += excess
+                    new_pot.add_chips(excess, i)
+
+        if excess_chips > 0:
+            new_pot.required_amount = self.current_bet - all_in_amount
+            self.pots.append(new_pot)
+            self.current_bet = all_in_amount
+            return True
+        return False
+
+    def get_call_amount(self) -> int:
+        player = self.players[self.current_player_idx]
+        current_contribution = self.street_contributions[self.current_player_idx]
+        total_to_call = 0
+        
+        for pot in self.pots:
+            if self.current_player_idx not in pot.eligible_players:
+                continue
+            to_call_for_pot = pot.required_amount - current_contribution
+            if to_call_for_pot > 0:
+                total_to_call += to_call_for_pot
+        
+        if total_to_call == 0:
+            total_to_call = self.current_bet - current_contribution
+        
+        return min(total_to_call, player.chips)
+
     def move_button(self):
         self.button_position = (self.button_position + 1) % 6
         
     def deal_hole_cards(self):
-        # Deal first card to each player
         for i in range(6):
             player_idx = (self.button_position + i + 1) % 6
             card = self.deck.deal()
             if card:
                 self.players[player_idx].add_pocket_card(card)
                 
-        # Deal second card to each player
         for i in range(6):
             player_idx = (self.button_position + i + 1) % 6
             card = self.deck.deal()
@@ -134,40 +183,56 @@ class TexasHoldem:
         bb_pos = (self.button_position + 2) % 6
         
         # Small blind
-        self.players[sb_pos].chips -= self.small_blind
-        self.pot += self.small_blind
+        sb_player = self.players[sb_pos]
+        sb_amount = min(self.small_blind, sb_player.chips)
+        sb_player.chips -= sb_amount
+        self.pots[0].add_chips(sb_amount, sb_pos)
+        
+        if sb_amount < self.small_blind:
+            self.all_in_players.add(sb_pos)
         
         # Big blind
-        self.players[bb_pos].chips -= self.big_blind
-        self.pot += self.big_blind
-        self.current_bet = self.big_blind
+        bb_player = self.players[bb_pos]
+        bb_amount = min(self.big_blind, bb_player.chips)
+        bb_player.chips -= bb_amount
+        self.pots[0].add_chips(bb_amount, bb_pos)
+        
+        if bb_amount < self.big_blind:
+            self.all_in_players.add(bb_pos)
+            if bb_amount < sb_amount:
+                # Create side pot if SB posted more than BB's all-in
+                self.create_side_pot(bb_amount)
+        
+        # Set current bet to the maximum amount posted
+        self.current_bet = max(sb_amount, bb_amount)
         
         self.current_player_idx = (self.button_position + 3) % 6
         self.last_bettor_idx = None
         self.min_raise = self.big_blind
         self.street_contributions = {i: 0 for i in range(6)}
         
-        self.street_contributions[sb_pos] = self.small_blind
-        self.street_contributions[bb_pos] = self.big_blind
+        # Update street contributions
+        self.street_contributions[sb_pos] = sb_amount
+        self.street_contributions[bb_pos] = bb_amount
         
     def get_available_actions(self) -> List[Action]:
-        """Return list of available actions for current player"""
         actions = [Action.FOLD]
         player = self.players[self.current_player_idx]
         
         if self.current_bet == 0:
             actions.append(Action.CHECK)
-            actions.append(Action.BET)
+            if player.chips > 0: 
+                actions.append(Action.BET)
         else:
-            call_amount = self.current_bet - getattr(player, 'current_bet', 0)
-            if call_amount < player.chips:
+            if player.chips > 0: 
                 actions.append(Action.CALL)
-                actions.append(Action.RAISE)
+                call_amount = self.current_bet - self.street_contributions[self.current_player_idx]
+                if player.chips > call_amount:
+                    actions.append(Action.RAISE)
                 
         return actions
 
     def process_action(self, action: Action, amount: Optional[int] = None) -> bool:
-        """Process a player action and return True if betting round is complete"""
         player = self.players[self.current_player_idx]
         
         if action == Action.FOLD:
@@ -179,15 +244,18 @@ class TexasHoldem:
             self.street_contributions[self.current_player_idx] = 0
                 
         elif action == Action.CALL:
+            call_amount = self.get_call_amount()
             current_contribution = self.street_contributions[self.current_player_idx]
-            call_amount = self.current_bet - current_contribution
-            
-            if call_amount > player.chips:
-                call_amount = player.chips
             
             player.chips -= call_amount
-            self.pot += call_amount
+            self.pots[0].add_chips(call_amount, self.current_player_idx)
             self.street_contributions[self.current_player_idx] += call_amount
+            
+            if player.chips == 0:
+                self.all_in_players.add(self.current_player_idx)
+                if call_amount < self.current_bet - current_contribution:
+                    # Create side pot for the amount above what the all-in player could call
+                    self.create_side_pot(current_contribution + call_amount)
             
         elif action in (Action.BET, Action.RAISE):
             if not amount:
@@ -202,24 +270,22 @@ class TexasHoldem:
                 raise ValueError(f"Minimum {action.value} is {min_amount}")
                 
             current_contribution = self.street_contributions[self.current_player_idx]
-            total_needed = amount - current_contribution
+            total_needed = min(amount - current_contribution, player.chips)
             
-            if total_needed > player.chips:
-                raise ValueError("Not enough chips")
-                
             player.chips -= total_needed
-            self.pot += total_needed
-            self.current_bet = amount
-            self.street_contributions[self.current_player_idx] = amount
+            self.pots[0].add_chips(total_needed, self.current_player_idx)
+            self.current_bet = current_contribution + total_needed
+            self.street_contributions[self.current_player_idx] += total_needed
             self.last_bettor_idx = self.current_player_idx
-            self.min_raise = amount - self.current_bet
+            self.min_raise = total_needed - self.current_bet
             
+            if player.chips == 0:
+                self.all_in_players.add(self.current_player_idx)
+                
         self.move_to_next_player()
-        
         return self.is_betting_round_complete()
         
     def move_to_next_player(self):
-        """Move to the next active player"""
         original_idx = self.current_player_idx
         while True:
             self.current_player_idx = (self.current_player_idx + 1) % 6
@@ -230,15 +296,19 @@ class TexasHoldem:
                 
     def is_betting_round_complete(self) -> bool:
         active_players = self.get_active_players()
+        non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
         
         if len(active_players) == 1:
+            return True
+        
+        if len(non_allin_players) <= 1:
             return True
 
         first_to_act = None
         if self.current_stage != GameStage.PREFLOP:
             idx = (self.button_position + 1) % 6
             while first_to_act is None:
-                if self.players[idx].is_active:
+                if self.players[idx].is_active and idx not in self.all_in_players:
                     first_to_act = idx
                 idx = (idx + 1) % 6
         else:
@@ -248,14 +318,17 @@ class TexasHoldem:
         
         if self.current_bet == 0:
             return (self.current_player_idx == first_to_act and 
-                    all(self.street_contributions[i] >= 0 for i in range(6) if self.players[i].is_active))
+                    all(self.street_contributions[i] >= 0 for i in range(6) 
+                        if self.players[i].is_active and i not in self.all_in_players))
         else:
             all_matched = all(self.street_contributions[i] == self.current_bet 
-                            for i in range(6) if self.players[i].is_active)
+                            for i in range(6) 
+                            if self.players[i].is_active and i not in self.all_in_players)
             
             if (self.current_stage == GameStage.PREFLOP and 
                 self.current_bet == self.big_blind and 
                 self.players[bb_pos].is_active and
+                bb_pos not in self.all_in_players and
                 all_matched and 
                 self.last_bettor_idx is None): 
                 return self.current_player_idx != bb_pos
@@ -332,17 +405,54 @@ class TexasHoldem:
             
         # Show results
         print("\nHand complete!")
-        print(f"Pot: {self.pot}")
+        total_pot = self.get_total_pot()
+        print(f"Total pot: {total_pot}")
+        
         active_players = self.get_active_players()
         if len(active_players) == 1:
             winner = active_players[0]
-            print(f"Winner: {winner.name} wins {self.pot} chips")
-            winner.chips += self.pot
+            winner_idx = self.players.index(winner)
+            print(f"\nWinner: {winner.name}")
+            # Award all pots to the single remaining player
+            for i, pot in enumerate(self.pots):
+                pot_name = "Main pot" if i == 0 else f"Side pot {i}"
+                print(f"{winner.name} wins {pot.amount} chips from {pot_name}")
+                winner.chips += pot.amount
         else:
-            print("Showdown required!")
+            print("\nShowdown required!")
+            # Show all hands first
             for player in active_players:
                 cards = " ".join(str(card) for card in player.pocket)
                 print(f"{player.name}'s hand: {cards}")
+            
+            # Determine winners for each pot
+            for i, pot in enumerate(self.pots):
+                pot_name = "Main pot" if i == 0 else f"Side pot {i}"
+                print(f"\n{pot_name} ({pot.amount} chips)")
+                
+                # Get eligible players for this pot
+                eligible_players = [p for p in active_players 
+                                if self.players.index(p) in pot.eligible_players]
+                
+                if len(eligible_players) == 0:
+                    print("No eligible players for this pot!")
+                    continue
+                    
+                if len(eligible_players) == 1:
+                    winner = eligible_players[0]
+                    print(f"{winner.name} wins {pot.amount} chips")
+                    winner.chips += pot.amount
+                else:
+                    # Here you would add logic to determine the best hand
+                    # For now, we'll just show the eligible players
+                    print("Eligible players:")
+                    for player in eligible_players:
+                        print(f"- {player.name}")
+                    # TODO: Implement hand comparison logic
+                    # For now, give it to the first eligible player
+                    winner = eligible_players[0]
+                    print(f"[Placeholder] {winner.name} wins {pot.amount} chips")
+                    winner.chips += pot.amount
                 
     def get_betting_info(self) -> str:
         active_player = self.players[self.current_player_idx]
@@ -360,7 +470,12 @@ class TexasHoldem:
     def get_hand_summary(self) -> str:
         summary = []
         summary.append(f"Stage: {self.current_stage.value}")
-        summary.append(f"Pot: {self.pot}")
+        
+        for i, pot in enumerate(self.pots):
+            pot_name = "Main Pot" if i == 0 else f"Side Pot {i}"
+            eligible_players = ", ".join(self.players[idx].name for idx in pot.eligible_players)
+            summary.append(f"{pot_name}: {pot.amount} (Eligible: {eligible_players})")
+            
         summary.append(f"Current bet: {self.current_bet}")
         
         if self.community_cards:
@@ -371,9 +486,8 @@ class TexasHoldem:
         for i, player in enumerate(self.players):
             position = self.get_player_position(i)
             pocket = " ".join(str(card) for card in player.pocket) if player.pocket else "XX"
-            player_info = f"{player.name} ({position}): {pocket} - Chips: {player.chips}"
-            if not player.is_active:
-                player_info = "Folded"
+            status = "All-in" if i in self.all_in_players else ("Active" if player.is_active else "Folded")
+            player_info = f"{player.name} ({position}): {pocket} - Chips: {player.chips} - {status}"
             summary.append(player_info)
             
         return "\n".join(summary)
