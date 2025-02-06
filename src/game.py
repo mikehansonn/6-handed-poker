@@ -3,6 +3,7 @@ from typing import List, Optional
 from player import Player
 from deck import Deck
 import random
+from evaluator import HandEvaluator
 
 class Pot:
     def __init__(self):
@@ -420,39 +421,49 @@ class TexasHoldem:
                 winner.chips += pot.amount
         else:
             print("\nShowdown required!")
-            # Show all hands first
-            for player in active_players:
-                cards = " ".join(str(card) for card in player.pocket)
-                print(f"{player.name}'s hand: {cards}")
-            
-            # Determine winners for each pot
-            for i, pot in enumerate(self.pots):
-                pot_name = "Main pot" if i == 0 else f"Side pot {i}"
-                print(f"\n{pot_name} ({pot.amount} chips)")
+            # Inside play_hand method, replace the placeholder showdown logic with:
+            # Inside play_hand method, replace the showdown logic with:
+            if len(active_players) > 1:
+                print("\nShowdown!")
+                print("\nCommunity cards:", " ".join(str(card) for card in self.community_cards))
                 
-                # Get eligible players for this pot
-                eligible_players = [p for p in active_players 
-                                if self.players.index(p) in pot.eligible_players]
+                # Show all hands and their rankings
+                for player in active_players:
+                    hand_str = " ".join(str(card) for card in player.pocket)
+                    print(f"\n{player.name}'s hole cards: {hand_str}")
                 
-                if len(eligible_players) == 0:
-                    print("No eligible players for this pot!")
-                    continue
+                # Determine winners for each pot
+                for i, pot in enumerate(self.pots):
+                    pot_name = "Main pot" if i == 0 else f"Side pot {i}"
+                    print(f"\n{pot_name} ({pot.amount} chips)")
                     
-                if len(eligible_players) == 1:
-                    winner = eligible_players[0]
-                    print(f"{winner.name} wins {pot.amount} chips")
-                    winner.chips += pot.amount
-                else:
-                    # Here you would add logic to determine the best hand
-                    # For now, we'll just show the eligible players
-                    print("Eligible players:")
+                    # Get eligible players for this pot
+                    eligible_players = [p for p in active_players 
+                                    if self.players.index(p) in pot.eligible_players]
+                    
+                    # Create a sublist of players for this pot
+                    pot_players = [p if self.players.index(p) in pot.eligible_players else None 
+                                for p in self.players]
+                    
+                    # Determine winners and their shares, and get all hand results
+                    winner_shares, hand_results = HandEvaluator.determine_winners(pot_players, self.community_cards)
+                    
+                    # Show each player's hand ranking
+                    print("\nHand rankings:")
                     for player in eligible_players:
-                        print(f"- {player.name}")
-                    # TODO: Implement hand comparison logic
-                    # For now, give it to the first eligible player
-                    winner = eligible_players[0]
-                    print(f"[Placeholder] {winner.name} wins {pot.amount} chips")
-                    winner.chips += pot.amount
+                        player_idx = self.players.index(player)
+                        if player_idx in hand_results:
+                            rank, primary, kickers = hand_results[player_idx]
+                            hand_desc = HandEvaluator.get_hand_description(rank, primary, kickers)
+                            print(f"{player.name}: {hand_desc}")
+                    
+                    # Award chips to winners
+                    print("\nPot awards:")
+                    for player_idx, share in winner_shares.items():
+                        winner = self.players[player_idx]
+                        amount = int(pot.amount * share)
+                        winner.chips += amount
+                        print(f"{winner.name} wins {amount} chips")
                 
     def get_betting_info(self) -> str:
         active_player = self.players[self.current_player_idx]
