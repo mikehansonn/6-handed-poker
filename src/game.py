@@ -1,9 +1,11 @@
 from enum import Enum
 from typing import List, Optional
 from player import Player
+from status import Status
 from deck import Deck
 import random
 from evaluator import HandEvaluator
+import os
 
 class Pot:
     def __init__(self):
@@ -57,7 +59,7 @@ class TexasHoldem:
         for player in self.players:
             player.clear_pocket()
             player.clear_hand()
-            player.is_active = True
+            player.is_active = Status.ACTIVE
 
     def get_total_pot(self) -> int:
         return sum(pot.amount for pot in self.pots)
@@ -67,7 +69,7 @@ class TexasHoldem:
         excess_chips = 0
 
         for i, player in enumerate(self.players):
-            if player.is_active and i not in self.all_in_players:
+            if player.is_active == Status.ACTIVE and i not in self.all_in_players:
                 if self.street_contributions[i] > all_in_amount:
                     excess = self.street_contributions[i] - all_in_amount
                     self.street_contributions[i] = all_in_amount
@@ -159,7 +161,11 @@ class TexasHoldem:
         
     def get_active_players(self) -> List[Player]:
         """Return a list of players still active in the hand"""
-        return [player for player in self.players if player.is_active]
+        return [player for player in self.players if player.is_active == Status.ACTIVE]
+    
+    def get_non_folded_players(self) -> List[Player]:
+        """Return a list of players still active in the hand"""
+        return [player for player in self.players if player.is_active != Status.FOLDED]
         
     def get_player_position(self, player_idx: int) -> str:
         positions = {
@@ -237,7 +243,7 @@ class TexasHoldem:
         player = self.players[self.current_player_idx]
         
         if action == Action.FOLD:
-            player.is_active = False
+            player.is_active = Status.FOLDED
             
         elif action == Action.CHECK:
             if self.current_bet != 0:
@@ -251,9 +257,9 @@ class TexasHoldem:
             player.chips -= call_amount
             self.pots[0].add_chips(call_amount, self.current_player_idx)
             self.street_contributions[self.current_player_idx] += call_amount
-            
             if player.chips == 0:
                 self.all_in_players.add(self.current_player_idx)
+                player.is_active = Status.ALL_IN
                 if call_amount < self.current_bet - current_contribution:
                     # Create side pot for the amount above what the all-in player could call
                     self.create_side_pot(current_contribution + call_amount)
@@ -282,6 +288,7 @@ class TexasHoldem:
             
             if player.chips == 0:
                 self.all_in_players.add(self.current_player_idx)
+                player.is_active = Status.ALL_IN
                 
         self.move_to_next_player()
         return self.is_betting_round_complete()
@@ -290,26 +297,26 @@ class TexasHoldem:
         original_idx = self.current_player_idx
         while True:
             self.current_player_idx = (self.current_player_idx + 1) % 6
-            if self.players[self.current_player_idx].is_active:
+            if self.players[self.current_player_idx].is_active == Status.ACTIVE:
                 break
             if self.current_player_idx == original_idx:
                 break
                 
     def is_betting_round_complete(self) -> bool:
-        active_players = self.get_active_players()
+        active_players = self.get_non_folded_players()
         non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
         
         if len(active_players) == 1:
             return True
         
-        if len(non_allin_players) <= 1:
+        if len(non_allin_players) <= 1 and self.current_bet == 0:
             return True
 
         first_to_act = None
         if self.current_stage != GameStage.PREFLOP:
             idx = (self.button_position + 1) % 6
             while first_to_act is None:
-                if self.players[idx].is_active and idx not in self.all_in_players:
+                if self.players[idx].is_active == Status.ACTIVE and idx not in self.all_in_players:
                     first_to_act = idx
                 idx = (idx + 1) % 6
         else:
@@ -320,15 +327,15 @@ class TexasHoldem:
         if self.current_bet == 0:
             return (self.current_player_idx == first_to_act and 
                     all(self.street_contributions[i] >= 0 for i in range(6) 
-                        if self.players[i].is_active and i not in self.all_in_players))
+                        if self.players[i].is_active == Status.ACTIVE and i not in self.all_in_players))
         else:
             all_matched = all(self.street_contributions[i] == self.current_bet 
                             for i in range(6) 
-                            if self.players[i].is_active and i not in self.all_in_players)
+                            if self.players[i].is_active == Status.ACTIVE and i not in self.all_in_players)
             
             if (self.current_stage == GameStage.PREFLOP and 
                 self.current_bet == self.big_blind and 
-                self.players[bb_pos].is_active and
+                self.players[bb_pos].is_active == Status.ACTIVE and
                 bb_pos not in self.all_in_players and
                 all_matched and 
                 self.last_bettor_idx is None): 
@@ -345,10 +352,10 @@ class TexasHoldem:
     def play_betting_round(self):
         while True:
             player = self.players[self.current_player_idx]
-            if not player.is_active:
+            if player.is_active == Status.FOLDED:
                 self.move_to_next_player()
                 continue
-                
+            
             print("\n" + "="*50)
             print(self.get_hand_summary())
             print(f"\nCurrent player: {player.name}")
@@ -383,20 +390,21 @@ class TexasHoldem:
         print("\nPre-flop betting round:")
         self.play_betting_round()
         
+        self.deal_flop()
         if len(self.get_active_players()) > 1:
             # Flop
-            self.deal_flop()
             print("\nFlop betting round:")
             self.reset_street_bets()
             self.play_betting_round()
             
+        self.deal_turn()
         if len(self.get_active_players()) > 1:
             # Turn
-            self.deal_turn()
             print("\nTurn betting round:")
             self.reset_street_bets()
             self.play_betting_round()
-            
+        
+        self.deal_river()
         if len(self.get_active_players()) > 1:
             # River
             self.deal_river()
@@ -409,7 +417,7 @@ class TexasHoldem:
         total_pot = self.get_total_pot()
         print(f"Total pot: {total_pot}")
         
-        active_players = self.get_active_players()
+        active_players = self.get_non_folded_players()
         if len(active_players) == 1:
             winner = active_players[0]
             winner_idx = self.players.index(winner)
@@ -464,6 +472,7 @@ class TexasHoldem:
                         amount = int(pot.amount * share)
                         winner.chips += amount
                         print(f"{winner.name} wins {amount} chips")
+                    print(self.get_hand_summary())
                 
     def get_betting_info(self) -> str:
         active_player = self.players[self.current_player_idx]
