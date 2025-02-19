@@ -1,0 +1,30 @@
+
+POKER BOT 
+---------
+
+Plan: 
+
+
+
+-----
+STEPS:
+-----
+
+1. Buy OpenAI credit and use my own key 
+2. test 6 any size game
+3. Add Basic frontend based off chatgpt description 
+
+------------
+RUNNING CODE
+------------
+
+- Run frontend server: uvicorn app:app --reload which listen on http://127.0.0.1:8000
+
+- Run backend with npm install, npm start which runs on  http://localhost:3000.
+
+
+--------
+FOR MIKE
+--------
+- To see how it works run the above commands to start both of the servers (GOT TO RUN THEM IN DIFFERENT TERMINALS)
+- Then proceed through the React app and when you press Create Game after you pick your players you will see the data in the console.logs 
