@@ -1,8 +1,10 @@
+// src/pages/ChooseBots.jsx
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 export default function ChooseBots() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const count = searchParams.get('count') || '1';
   const maxBots = Number(count);
   
@@ -23,12 +25,8 @@ export default function ChooseBots() {
   const handleCreateGame = async () => {
     // Build the two arrays: one for player names and one for bot IDs.
     // The first player is always human.
-    const playerNames = [];
-    const botIds = [];
-
-    // Human player at index 0:
-    playerNames.push("HumanUser");
-    botIds.push(null);
+    const playerNames = ['HumanUser']; // human at index 0
+    const botIds = [null];              // corresponding bot_id is null
 
     // For each selected bot, add its name and id.
     selectedBots.forEach((bot) => {
@@ -39,7 +37,6 @@ export default function ChooseBots() {
     console.log('Player Names:', playerNames);
     console.log('Bot IDs:', botIds);
 
-    // Uncomment and update the fetch below when your API is ready:
     try {
       const response = await fetch("http://127.0.0.1:8000/games/create", {
         method: "POST",
@@ -48,6 +45,8 @@ export default function ChooseBots() {
       });
       const data = await response.json();
       console.log("Game created:", data);
+      // Navigate to the game table page and pass the returned state using location.state.
+      navigate('/game-table', { state: { gameState: data.state } });
     } catch (error) {
       console.error("Error creating game:", error);
     }
