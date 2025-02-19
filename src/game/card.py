@@ -1,4 +1,4 @@
-from .suit import Suit
+from suit import Suit
 
 
 class Card:

@@ -1,4 +1,4 @@
-from .status import Status
+from status import Status
 
 class Player:
     def __init__(self, name, chips):

@@ -1,5 +1,5 @@
-from .suit import Suit
-from .card import Card
+from suit import Suit
+from card import Card
 import random
 
 class Deck:

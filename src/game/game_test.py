@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import List, Optional
-from .player import Player
-from .status import Status
-from .deck import Deck
+from player import Player
+from status import Status
+from deck import Deck
 import random
 from .evaluator import HandEvaluator
 import os

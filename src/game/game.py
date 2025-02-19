@@ -1,10 +1,10 @@
 from enum import Enum
 from typing import List, Optional
-from .player import Player
-from .status import Status
-from .deck import Deck
+from player import Player
+from status import Status
+from deck import Deck
 import random
-from .evaluator import HandEvaluator
+from evaluator import HandEvaluator
 import os
 import time
 
@@ -48,14 +48,15 @@ class TexasHoldem:
         
         self.deck = Deck()
         self.players = [Player(name, 100) for name in player_names]
+        self.sitting_out = []
         self.community_cards = []
         self.current_stage = GameStage.PREFLOP
         self.button_position = 0
         self.current_player_idx = 0
         self.pots = [Pot()]  # Main pot is always first
         self.current_bet = 0
-        self.small_blind = 10
-        self.big_blind = 20
+        self.small_blind = 1
+        self.big_blind = 2
         self.all_in_players = set()  # Track players who are all-in
         
     def reset_hand(self):
@@ -66,10 +67,14 @@ class TexasHoldem:
         self.current_bet = 0
         self.all_in_players = set()
         
-        for player in self.players:
+        for player in self.players[:]:
             player.clear_pocket()
             player.clear_hand()
-            player.is_active = Status.ACTIVE
+            player.is_active = Status.ACTIVE if player.chips >= 2 else Status.FOLDED
+            if player.is_active == Status.FOLDED:
+                self.sitting_out.append(player)
+                self.players.remove(player)
+
 
     def get_total_pot(self) -> int:
         return sum(pot.amount for pot in self.pots)
@@ -121,17 +126,17 @@ class TexasHoldem:
         return min(total_to_call, player.chips)
 
     def move_button(self):
-        self.button_position = (self.button_position + 1) % 6
+        self.button_position = (self.button_position + 1) % len(self.players)
         
     def deal_hole_cards(self):
-        for i in range(6):
-            player_idx = (self.button_position + i + 1) % 6
+        for i in range(len(self.players)):
+            player_idx = (self.button_position + i + 1) % len(self.players)
             card = self.deck.deal()
             if card:
                 self.players[player_idx].add_pocket_card(card)
                 
-        for i in range(6):
-            player_idx = (self.button_position + i + 1) % 6
+        for i in range(len(self.players)):
+            player_idx = (self.button_position + i + 1) % len(self.players)
             card = self.deck.deal()
             if card:
                 self.players[player_idx].add_pocket_card(card)
@@ -187,15 +192,44 @@ class TexasHoldem:
         
     def get_player_position(self, player_idx: int) -> str:
         positions = {
-            0: "Button",
-            1: "Small Blind",
-            2: "Big Blind",
-            3: "UTG",
-            4: "UTG+1",
-            5: "Cutoff"
+            2: {
+                0: "Button/Small Blind",
+                1: "Big Blind"
+            },
+            3: {
+                0: "Button",
+                1: "Small Blind",
+                2: "Big Blind"
+            },
+            4: {
+                0: "Button",
+                1: "Small Blind",
+                2: "Big Blind",
+                3: "Cutoff"
+            },
+            5: {
+                0: "Button",
+                1: "Small Blind",
+                2: "Big Blind",
+                3: "UTG",
+                4: "Cutoff"
+            },
+            6: {
+                0: "Button",
+                1: "Small Blind",
+                2: "Big Blind",
+                3: "UTG",
+                4: "UTG+1",
+                5: "Cutoff"
+            }
         }
-        relative_position = (player_idx - self.button_position) % 6
-        return positions[relative_position]
+        
+        num_players = len(self.players)
+        if num_players < 2 or num_players > 6:
+            raise ValueError("Invalid number of players. Must be between 2 and 6.")
+            
+        relative_position = (player_idx - self.button_position) % num_players
+        return positions[num_players][relative_position]
         
     def start_new_hand(self):
         self.reset_hand()
@@ -203,8 +237,8 @@ class TexasHoldem:
         self.deal_hole_cards()
         
         # Post blinds
-        sb_pos = (self.button_position + 1) % 6
-        bb_pos = (self.button_position + 2) % 6
+        sb_pos = (self.button_position + 1) % len(self.players)
+        bb_pos = (self.button_position + 2) % len(self.players)
         
         # Small blind
         sb_player = self.players[sb_pos]
@@ -228,10 +262,10 @@ class TexasHoldem:
         
         self.current_bet = max(sb_amount, bb_amount)
         
-        self.current_player_idx = (self.button_position + 3) % 6
+        self.current_player_idx = (self.button_position + 3) % len(self.players)
         self.last_bettor_idx = None
         self.min_raise = self.big_blind
-        self.street_contributions = {i: 0 for i in range(6)}
+        self.street_contributions = {i: 0 for i in range(len(self.players))}
         
         self.street_contributions[sb_pos] = sb_amount
         self.street_contributions[bb_pos] = bb_amount
@@ -358,7 +392,7 @@ class TexasHoldem:
     def move_to_next_player(self):
         original_idx = self.current_player_idx
         while True:
-            self.current_player_idx = (self.current_player_idx + 1) % 6
+            self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
             if self.players[self.current_player_idx].is_active == Status.ACTIVE:
                 break
             if self.current_player_idx == original_idx:
@@ -376,23 +410,23 @@ class TexasHoldem:
 
         first_to_act = None
         if self.current_stage != GameStage.PREFLOP:
-            idx = (self.button_position + 1) % 6
+            idx = (self.button_position + 1) % len(self.players)
             while first_to_act is None:
                 if self.players[idx].is_active == Status.ACTIVE and idx not in self.all_in_players:
                     first_to_act = idx
-                idx = (idx + 1) % 6
+                idx = (idx + 1) % len(self.players)
         else:
-            first_to_act = (self.button_position + 3) % 6 
+            first_to_act = (self.button_position + 3) % len(self.players) 
         
-        bb_pos = (self.button_position + 2) % 6
+        bb_pos = (self.button_position + 2) % len(self.players)
         
         if self.current_bet == 0:
             return (self.current_player_idx == first_to_act and 
-                    all(self.street_contributions[i] >= 0 for i in range(6) 
+                    all(self.street_contributions[i] >= 0 for i in range(len(self.players)) 
                         if self.players[i].is_active == Status.ACTIVE and i not in self.all_in_players))
         else:
             all_matched = all(self.street_contributions[i] == self.current_bet 
-                            for i in range(6) 
+                            for i in range(len(self.players)) 
                             if self.players[i].is_active == Status.ACTIVE and i not in self.all_in_players)
             
             if (self.current_stage == GameStage.PREFLOP and 
@@ -408,8 +442,8 @@ class TexasHoldem:
     def reset_street_bets(self):
         self.current_bet = 0
         self.last_bettor_idx = None
-        self.street_contributions = {i: 0 for i in range(6)}
-        self.current_player_idx = (self.button_position + 1) % 6
+        self.street_contributions = {i: 0 for i in range(len(self.players))}
+        self.current_player_idx = (self.button_position + 1) % len(self.players)
 
 
     def play_betting_round(self):
@@ -601,7 +635,7 @@ class TexasHoldem:
         for i, player in enumerate(self.players):
             position = self.get_player_position(i)
             pocket = " ".join(str(card) for card in player.pocket) if player.pocket else "XX"
-            status = "All-in" if i in self.all_in_players else ("Active" if player.is_active else "Folded")
+            status = "All-in" if i in self.all_in_players else ("Active" if player.is_active == Status.ACTIVE else "Folded")
             player_info = f"{player.name} ({position}): {pocket} - Chips: {player.chips} - {status}"
             summary.append(player_info)
             
@@ -658,8 +692,8 @@ class TexasHoldem:
 
 
 if __name__ == "__main__": 
-
     players = ["Alice", "Bob", "Kevin", "Matt", "Lebron", "Jack"]
     game = TexasHoldem(players)
-    game.play_hand()
+    while True:
+        game.play_hand()
 

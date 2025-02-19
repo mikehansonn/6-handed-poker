@@ -2,8 +2,8 @@ from enum import Enum
 from typing import List, Tuple, Dict
 from collections import Counter
 from itertools import combinations
-from .card import Card
-from .player import Player 
+from card import Card
+from player import Player 
 
 class HandRank(Enum):
     HIGH_CARD = 0
