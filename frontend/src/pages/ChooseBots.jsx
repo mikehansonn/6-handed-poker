@@ -1,6 +1,7 @@
 // src/pages/ChooseBots.jsx
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import api from "./api";
 
 export default function ChooseBots() {
   const [searchParams] = useSearchParams();
@@ -22,31 +23,31 @@ export default function ChooseBots() {
     }
   };
 
+  const storeWithExpiry = (key, value, ttl) => {
+    const item = {
+      value: value,
+      expiry: new Date().getTime() + ttl,
+    }
+    localStorage.setItem(key, JSON.stringify(item));
+  };
+  
   const handleCreateGame = async () => {
-    // Build the two arrays: one for player names and one for bot IDs.
-    // The first player is always human.
-    const playerNames = ['HumanUser']; // human at index 0
-    const botIds = [null];              // corresponding bot_id is null
-
-    // For each selected bot, add its name and id.
+    const playerNames = ['HumanUser'];
+    const botIds = [null];
+  
     selectedBots.forEach((bot) => {
       playerNames.push(bot);
-      botIds.push(bot.toLowerCase()); // e.g., "LooseLauren" -> "looselauren"
+      botIds.push(bot.toLowerCase());
     });
-
-    console.log('Player Names:', playerNames);
-    console.log('Bot IDs:', botIds);
-
+  
     try {
-      const response = await fetch("http://127.0.0.1:8000/games/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ player_names: playerNames, bot_ids: botIds }),
-      });
-      const data = await response.json();
-      console.log("Game created:", data);
-      // Navigate to the game table page and pass the returned state using location.state.
-      navigate('/game-table', { state: { gameState: data.state } });
+      const response = await api.post("/games/create", { player_names: playerNames, bot_ids: botIds });
+      console.log("Game created:", response.data);
+      
+      const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+      storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
+      
+      navigate('/game-table', { state: { gameState: response.data.state } });
     } catch (error) {
       console.error("Error creating game:", error);
     }

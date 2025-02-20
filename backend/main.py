@@ -1,30 +1,43 @@
-# main.py
+from typing import Dict
+from fastapi import FastAPI
+import os
+from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from game import TexasHoldem
-from bots import LooseLaurenBot  # we can import multiple if needed
+from api import game
+import logging
 
-def main():
-    # Setup players
-    player_names = ["Bot1", "Human", "Bot2", "Bot3", "Bot4", "Bot5"]
-    # Create your five bots
-    bot1 = LooseLaurenBot()
-    bot2 = LooseLaurenBot()
-    bot3 = LooseLaurenBot()
-    bot4 = LooseLaurenBot()
-    bot5 = LooseLaurenBot()
+# Run application with
+# uvicorn main:app --reload
+# runs on http://localhost:8000
 
-    # The last slot is for a human, indicated by None
-    controllers = [bot1, None, bot2, bot3, bot4, bot5]
+app = FastAPI()
 
-    game = TexasHoldem(
-        player_names=player_names,
-        player_controllers=controllers  # see earlier code snippet
-    )
+# Configure CORS
+# Also need to add the URL of our Webpage here so they can connect
+origins = [
+    "http://localhost:3000"
+    #, "https://aicehigh.com/"
+]
 
-    while True:
-        game.play_hand()
-        cont = input("Play another hand? (y/n): ")
-        if cont.lower() not in ("y", "yes"):
-            break
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-if __name__ == "__main__":
-    main()
+# Logging stuff
+# Use the following in api calls for more info
+# logger.info(f"Creating new game with ID: {game_id}")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# How to include API routes from other files 
+app.include_router(game.router, tags=["games"])
+# app.include_router(user.router, tags=["users"])
+
+@app.get("/")
+async def root():
+    return {"message": "Active"}
