@@ -54,6 +54,8 @@ async def start_hand(request: StartHandRequest):
 @router.post("/games/player-action")
 async def process_player_action(request: PlayerActionRequest):
     game_id = request.game_id
+    print(request.action)
+    print(request.amount)
     
     if game_id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")

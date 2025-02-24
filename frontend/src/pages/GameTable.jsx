@@ -1,63 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from './api';
-
-const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handleBetSubmit }) => {
-  if (!gameState) return null;
-
-  const currentPlayer = gameState.players[gameState.current_player_idx];
-  const isUserTurn = !currentPlayer.is_bot;
-  const availableActions = currentPlayer.available_actions || [];
-
-  const buttonStyles = {
-    fold: "bg-red-500 hover:bg-red-600",
-    check: "bg-blue-500 hover:bg-blue-600",
-    call: "bg-green-500 hover:bg-green-600",
-    bet: "bg-yellow-500 hover:bg-yellow-600",
-    raise: "bg-purple-500 hover:bg-purple-600"
-  };
-
-  const showBetInput = (availableActions.includes('bet') || availableActions.includes('raise'));
-
-  return (
-    isUserTurn && (
-      <div className="fixed bottom-8 left-6 z-50">
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          {availableActions.map(action => (
-            <button
-              key={action}
-              onClick={() => handleActionClick(action)}
-              className={`${buttonStyles[action]} text-white px-6 py-3 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg uppercase tracking-wide`}
-            >
-              {action}
-              {action === 'call' && currentPlayer.call_amount ? ` ($${currentPlayer.call_amount})` : ''}
-            </button>
-          ))}
-        </div>
-
-        {/* Bet/Raise Input */}
-        {showBetInput && (
-          <div className="flex items-center gap-3 bg-gray-800/50 p-3 rounded-lg backdrop-blur-sm">
-            <span className="text-white font-medium">Amount:</span>
-            <input
-              type="number"
-              className="px-3 py-2 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-32 text-lg"
-              value={betAmount}
-              onChange={(e) => setBetAmount(e.target.value)}
-              min={0}
-            />
-            <button 
-              onClick={handleBetSubmit}
-              className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg"
-            >
-              Confirm
-            </button>
-          </div>
-        )}
-      </div>
-    )
-  );
-};
+import ActionButtons from './ActionButtons';
 
 const GameTable = () => {
   const [gameState, setGameState] = useState(() => {
@@ -386,12 +329,12 @@ const GameTable = () => {
         </div>
         {/* Action buttons */}
         <ActionButtons 
-            gameState={gameState} 
-            handleActionClick={handleActionClick} 
-            betAmount={betAmount} 
-            setBetAmount={setBetAmount} 
-            handleBetSubmit={handleBetSubmit} 
-          />
+          gameState={gameState} 
+          handleActionClick={handleActionClick} 
+          betAmount={betAmount} 
+          setBetAmount={setBetAmount} 
+          handlePlayerAction={handlePlayerAction} 
+        />
       </div>
     </div>
   );

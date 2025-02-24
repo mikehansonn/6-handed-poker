@@ -393,7 +393,6 @@ class TexasHoldem:
                 break
                 
     def is_betting_round_complete(self) -> bool:
-        print("1")
         active_players = self.get_non_folded_players()
         non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
         
