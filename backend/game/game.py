@@ -381,6 +381,9 @@ class TexasHoldem:
 
         
     def move_to_next_player(self):
+        if len(self.get_active_players()) == 0:
+            return
+        
         original_idx = self.current_player_idx
         while True:
             self.current_player_idx = (self.current_player_idx + 1) % len(self.players)
@@ -390,6 +393,7 @@ class TexasHoldem:
                 break
                 
     def is_betting_round_complete(self) -> bool:
+        print("1")
         active_players = self.get_non_folded_players()
         non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
         
@@ -397,6 +401,9 @@ class TexasHoldem:
             return True
         
         if len(non_allin_players) <= 1 and self.current_bet == 0:
+            return True
+
+        if len(non_allin_players) == 0:
             return True
 
         first_to_act = None
