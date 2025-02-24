@@ -434,7 +434,16 @@ class TexasHoldem:
         self.current_bet = 0
         self.last_bettor_idx = None
         self.street_contributions = {i: 0 for i in range(len(self.players))}
-        self.current_player_idx = (self.button_position + 1) % len(self.players)
+        #self.current_player_idx = (self.button_position + 1) % len(self.players)
+
+        # Start from the seat immediately after the button
+        next_idx = (self.button_position + 1) % len(self.players)
+
+        # Skip over any players who have folded
+        while self.players[next_idx].is_active == Status.FOLDED:
+            next_idx = (next_idx + 1) % len(self.players)
+
+        self.current_player_idx = next_idx
 
 
     def play_betting_round(self):

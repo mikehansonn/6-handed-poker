@@ -1,18 +1,23 @@
+------
+TO FIX
+------
 
-POKER BOT 
----------
-
-Plan: 
+- Need to figure out all in situation
+- Side pots printing is messed up on the frontend
 
 
+- Don't show other players hands on the frontend
+- Update game_state_json function only return current player information (NOT OTHER PLAYERS HANDS) 
 
 -----
 STEPS:
 -----
 
 1. Buy OpenAI credit and use my own key 
-2. test 6 any size game
-3. Add Basic frontend based off chatgpt description 
+2. Fix errors above
+3. Add in end game button that returns you to the homepage and deletes your game_id  
+4. Add In table talk from bots
+5. Add in AI coach
 
 ------------
 RUNNING CODE
@@ -23,8 +28,7 @@ RUNNING CODE
 - Run backend with npm install, npm start which runs on  http://localhost:3000.
 
 
---------
-FOR MIKE
---------
-- To see how it works run the above commands to start both of the servers (GOT TO RUN THEM IN DIFFERENT TERMINALS)
-- Then proceed through the React app and when you press Create Game after you pick your players you will see the data in the console.logs 
+
+
+
+- 

@@ -20,7 +20,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
 
   return (
     isUserTurn && (
-      <div className="flex flex-col items-center mt-4 gap-4">
+      <div className="fixed bottom-8 left-6 z-50">
         {/* Action Buttons */}
         <div className="flex gap-3">
           {availableActions.map(action => (
@@ -249,6 +249,21 @@ const GameTable = () => {
 
   return (
     <div className="flex flex-col items-center pt-20 min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+      
+      {/* Start game button, starts blurring the whole page */}
+      {!checkStarted && (
+          <div className="absolute inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center">
+            <button
+              onClick={handleStartGame}
+              className="px-8 py-4 text-xl bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105"
+            >
+              Start Game
+            </button>
+          </div>
+        )}
+      
+      
+      
       {error && (
         <div className="bg-red-500/90 backdrop-blur text-white px-6 py-3 rounded-lg mb-5 shadow-lg">
           {error}
