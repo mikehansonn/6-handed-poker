@@ -173,11 +173,3 @@ class LooseLaurenBot:
 
 if __name__ == "__main__":
     bot = LooseLaurenBot()
-
-    # sample_state = "THIS IS A FAKE SAMPLE STATE"
-    # decision = bot.get_decision(sample_state)
-
-    # print("LooseLaurenBot Decision:", decision)
-    # print("Action:", decision.get("action"))
-    # print("Amount:", decision.get("amount"))
-    # print("table_comment:", decision.get("table_comment"))

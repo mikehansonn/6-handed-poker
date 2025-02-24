@@ -41,13 +41,20 @@ export default function ChooseBots() {
     });
   
     try {
-      const response = await api.post("/games/create", { player_names: playerNames, bot_ids: botIds });
+      const response = await api.post("/games/create", { 
+        player_names: playerNames, 
+        bot_ids: botIds 
+      });
       console.log("Game created:", response.data);
       
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
       storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
       
-      navigate('/game-table', { state: { gameState: response.data.state } });
+      navigate('/game-table', { 
+        state: { 
+          initialGameState: response.data.state 
+        } 
+      });
     } catch (error) {
       console.error("Error creating game:", error);
     }

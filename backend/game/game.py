@@ -34,11 +34,11 @@ class Action(Enum):
 
 class TexasHoldem:
     def __init__(self, player_names: List[str], player_controllers: Optional[List[object]] = None, starting_chips: int = 1000):
-        
         self.player_controllers = player_controllers
-        
+
         self.deck = Deck()
-        self.players = [Player(name, 100) for name in player_names]
+        self.players = [Player(name, 200, True) for name in player_names]
+        self.players[0].is_bot = False
         self.sitting_out = []
         self.community_cards = []
         self.current_stage = GameStage.PREFLOP
@@ -640,7 +640,7 @@ class TexasHoldem:
             "current_bet": self.current_bet,
             "small_blind": self.small_blind,
             "big_blind": self.big_blind,
-            "min_raise": self.min_raise,
+            "min_raise": self.current_bet + self.min_raise,
             "last_bettor_idx": self.last_bettor_idx,
             
             "community_cards": [str(card) for card in self.community_cards],
@@ -664,6 +664,7 @@ class TexasHoldem:
                 "position": self.get_player_position(i),
                 "chips": player.chips,
                 "status": player.is_active.value,
+                "is_bot": player.is_bot,
                 "pocket_cards": [str(card) for card in player.pocket] if player.pocket else [],
                 "current_street_contribution": self.street_contributions[i],
                 "is_all_in": i in self.all_in_players

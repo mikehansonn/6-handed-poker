@@ -2,6 +2,7 @@
 
 from .loose_lauren_bot import LooseLaurenBot
 from .tight_timmy_bot import TightPokerBot
+from .optimized_bot import OptimizedPokerBot
 
 
 __all__ = [
