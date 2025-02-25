@@ -61,8 +61,7 @@ class OptimizedPokerBot:
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=50,  # Limit token usage
-                temperature=0.7
+                max_tokens=50
             )
             print(response)
             # Parse the simple response format

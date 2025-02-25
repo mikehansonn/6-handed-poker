@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import api from './api';
 import ActionButtons from './ActionButtons';
 
-
 const GameTable = () => {
   const navigate = useNavigate();
   const [gameState, setGameState] = useState(() => {
@@ -17,6 +16,82 @@ const GameTable = () => {
   const [showBetInput, setShowBetInput] = useState(false);
   const [selectedAction, setSelectedAction] = useState(null);
   const [winner, setWinner] = useState(null);
+  const [gameStats, setGameStats] = useState({
+    startingChips: 200, // Default starting value from game.py
+    handsPlayed: 0,
+    handsWon: 0,
+    bestHand: null
+  });
+
+  // Track game statistics
+  useEffect(() => {
+    if (gameState) {
+      // Update handsPlayed count when a new hand starts
+      if (gameState.community_cards && gameState.community_cards.length === 0) {
+        setGameStats(prevStats => ({
+          ...prevStats,
+          handsPlayed: prevStats.handsPlayed + 1
+        }));
+      }
+      
+      // Track the human player's chips
+      const humanPlayer = gameState.players.find(p => !p.is_bot);
+      if (humanPlayer) {
+        setGameStats(prevStats => ({
+          ...prevStats,
+          finalChips: humanPlayer.chips
+        }));
+      }
+    }
+  }, [gameState]);
+
+  // State to track game end conditions
+  const [gameEndState, setGameEndState] = useState(null);
+  const [handComplete, setHandComplete] = useState(false);
+
+  // Check for game end conditions ONLY after a hand is complete
+  useEffect(() => {
+    // Only check when a hand has completed and we're not already in a game end state
+    if (handComplete && gameState && !gameEndState) {
+      const humanPlayer = gameState.players.find(p => !p.is_bot);
+      
+      // Check if human player has lost (out of chips after hand distribution)
+      if (humanPlayer && humanPlayer.chips <= 0) {
+        setGameEndState('lost');
+        return;
+      }
+      
+      // Check if human player is the only one left with chips
+      const playersWithChips = gameState.players.filter(p => p.chips > 0);
+      if (playersWithChips.length === 1 && !playersWithChips[0].is_bot) {
+        setGameEndState('won');
+        return;
+      }
+      
+      // Reset handComplete flag if no end condition was met
+      setHandComplete(false);
+    }
+  }, [handComplete, gameState, gameEndState]);
+  
+  // Handle redirect after delay when game end is detected
+  useEffect(() => {
+    if (gameEndState) {
+      // Set a timer to navigate after 5 seconds
+      const timer = setTimeout(() => {
+        if (gameEndState === 'lost') {
+          navigate('/game-lost', { 
+            state: { gameStats: gameStats }
+          });
+        } else if (gameEndState === 'won') {
+          navigate('/game-won', { 
+            state: { gameStats: gameStats }
+          });
+        }
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [gameEndState, navigate, gameStats]);
 
   // Existing game logic remains the same...
   useEffect(() => {
@@ -24,18 +99,18 @@ const GameTable = () => {
     if (state && !gameState) {
       setGameState(state);
     }
-  }, []);
+  }, [gameState]);
 
   useEffect(() => {
     let timer;
-    if (winner) {
+    if (winner && !gameEndState) {
       timer = setTimeout(() => {
         setWinner(null);
         handleStartGame();
       }, 3000);
     }
     return () => clearTimeout(timer);
-  }, [winner]);
+  }, [winner, gameEndState]);
 
   // All existing handler functions remain the same...
   const processBotActions = async () => {
@@ -61,14 +136,38 @@ const GameTable = () => {
 
   const handleHandComplete = (finalGameState) => {
     const nonFoldedPlayers = finalGameState.players.filter(p => p.status !== 'folded');
+    
+    // Check if the human player won this hand
+    const humanPlayer = finalGameState.players.find(p => !p.is_bot);
+    const humanPlayerIndex = finalGameState.players.findIndex(p => !p.is_bot);
+    
     if (nonFoldedPlayers.length === 1) {
       setWinner(nonFoldedPlayers[0]);
+      
+      // Update hand win stats if human player won
+      if (nonFoldedPlayers[0] === humanPlayer) {
+        setGameStats(prevStats => ({
+          ...prevStats,
+          handsWon: prevStats.handsWon + 1
+        }));
+      }
     } else {
       const winningPlayer = finalGameState.players.reduce((prev, current) => 
         (current.chips > prev.chips) ? current : prev
       );
       setWinner(winningPlayer);
+      
+      // Check if human player gained chips (won the hand)
+      if (humanPlayer && humanPlayer.chips > gameStats.finalChips) {
+        setGameStats(prevStats => ({
+          ...prevStats,
+          handsWon: prevStats.handsWon + 1
+        }));
+      }
     }
+    
+    // Set handComplete flag to trigger game end check
+    setHandComplete(true);
   };
 
   const handleStartGame = async () => {
@@ -236,6 +335,20 @@ const GameTable = () => {
               </div>
               <div className="text-2xl text-white text-center font-semibold">
                 {winner.name}
+              </div>
+            </div>
+          )}
+          
+          {gameEndState && (
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-black/90 p-8 rounded-xl backdrop-blur-sm shadow-2xl border border-yellow-500/30">
+              <div className={`text-4xl font-bold ${gameEndState === 'won' ? 'text-yellow-400' : 'text-red-500'} text-center mb-3 animate-pulse`}>
+                {gameEndState === 'won' ? 'You Won The Game!' : 'Game Over!'}
+              </div>
+              <div className="text-2xl text-white text-center font-semibold mb-4">
+                {gameEndState === 'won' ? 'You\'re the last player with chips!' : 'You\'ve run out of chips!'}
+              </div>
+              <div className="text-lg text-gray-300 text-center">
+                Redirecting in 5 seconds...
               </div>
             </div>
           )}
