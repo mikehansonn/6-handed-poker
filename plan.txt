@@ -2,12 +2,13 @@
 TO FIX
 ------
 
-- Need to figure out all in situation
+- Removal from the controller [THINK THIS IS FIXED] 
+- If players are all in (they have 0 chips) just progress the game don't let them call an action
+- If HumanUser loses send them back to the home page
+
 - Side pots printing is messed up on the frontend
 
-
-- Don't show other players hands on the frontend
-- Update game_state_json function only return current player information (NOT OTHER PLAYERS HANDS) 
+- Don't show other players hands on the frontend 
 
 -----
 STEPS:

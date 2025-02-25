@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import api from './api';
 import ActionButtons from './ActionButtons';
 
+
 const GameTable = () => {
+  const navigate = useNavigate();
   const [gameState, setGameState] = useState(() => {
     const state = window.history.state?.usr?.initialGameState;
     return state || null;
@@ -75,6 +78,7 @@ const GameTable = () => {
       const data = await response.data;
       setGameState(data.game_state);
       setCheckStarted(true);
+
       if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();
       }

@@ -27,6 +27,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
   const currentPlayer = gameState.players[gameState.current_player_idx];
   const isUserTurn = !currentPlayer.is_bot;
   const availableActions = currentPlayer.available_actions || [];
+
   
   // Calculate min and max bet amounts
   const minBet = availableActions.includes('bet') 

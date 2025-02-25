@@ -58,13 +58,29 @@ class TexasHoldem:
         self.current_bet = 0
         self.all_in_players = set()
         
-        for player in self.players[:]:
+        # We'll build new lists for players/controllers
+        # to remove anyone who busts (chips < 2) from both.
+        new_players = []
+        new_controllers = []
+
+        for i, player in enumerate(self.players):
+            # Clear old cards
             player.clear_pocket()
             player.clear_hand()
-            player.is_active = Status.ACTIVE if player.chips >= 2 else Status.FOLDED
-            if player.is_active == Status.FOLDED:
+
+            # If the player has at least 2 chips, they're active. Otherwise folded.
+            if player.chips >= 2:
+                player.is_active = Status.ACTIVE
+                new_players.append(player)
+                # Keep the same index from player_controllers
+                new_controllers.append(self.player_controllers[i])
+            else:
+                player.is_active = Status.FOLDED
                 self.sitting_out.append(player)
-                self.players.remove(player)
+
+        # Replace the old lists with the new, filtered lists
+        self.players = new_players
+        self.player_controllers = new_controllers
 
 
     def get_total_pot(self) -> int:
