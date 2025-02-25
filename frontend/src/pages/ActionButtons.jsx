@@ -66,7 +66,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
     
     const halfPot = Math.min(Math.floor(gameState.total_pot / 2), maxBet);
     const potSize = Math.min(gameState.total_pot, maxBet);
-    const allIn = maxBet;
+    const allIn = maxBet + currentPlayer.current_street_contribution;
     
     return [
       { label: "Min", value: minBet },

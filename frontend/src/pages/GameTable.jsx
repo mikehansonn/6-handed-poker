@@ -277,7 +277,7 @@ const GameTable = () => {
               <div className="absolute" style={{ left: x, top: y }}>
                 <div className={`w-[120px] h-[120px] rounded-xl bg-white/95 shadow-xl transition-all duration-300 transform
                   ${gameState.current_player_idx === index ? 'ring-4 ring-yellow-400 scale-110' : 'hover:scale-105'}
-                  ${player.status === 'folded' ? 'opacity-75' : ''}`}>
+                  ${player.status === 'folded' ? 'opacity-60' : ''}`}>
                   <div className="p-3 text-center">
                     <div className="font-bold text-gray-800 text-lg mb-1">{player.name}</div>
                     <div className="text-green-600 font-semibold text-lg">${player.chips}</div>
@@ -316,16 +316,6 @@ const GameTable = () => {
               </div>
             </div>
           ))}
-          
-          {/* Start game button */}
-          {!checkStarted && (
-            <button 
-              onClick={handleStartGame}
-              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-8 py-4 text-xl bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl shadow-xl hover:from-green-600 hover:to-green-700 transition-all transform hover:scale-105"
-            >
-              Start Game
-            </button>
-          )}
         </div>
         {/* Action buttons */}
         <ActionButtons 

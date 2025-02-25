@@ -694,6 +694,66 @@ class TexasHoldem:
             game_state["players"].append(player_info)
         
         return game_state
+
+    def get_bot_state_json(self) -> dict:
+        game_state = {
+            "game_stage": self.current_stage.value,
+            "button_position": self.button_position,
+            "current_player_idx": self.current_player_idx,
+            "current_bet": self.current_bet,
+            "small_blind": self.small_blind,
+            "big_blind": self.big_blind,
+            "min_raise": self.current_bet + self.min_raise,
+            "last_bettor_idx": self.last_bettor_idx,
+            
+            "community_cards": [str(card) for card in self.community_cards],
+            
+            "pots": [{
+                "amount": pot.amount,
+                "eligible_players": list(pot.eligible_players),
+                "required_amount": pot.required_amount
+            } for pot in self.pots],
+            "total_pot": self.get_total_pot(),
+            
+            "players": [],
+            
+            "street_contributions": self.street_contributions,
+            "all_in_players": list(self.all_in_players)
+        }
+        
+        for i, player in enumerate(self.players):
+            if i == self.current_player_idx:
+                player_info = {
+                    "name": player.name,
+                    "position": self.get_player_position(i),
+                    "chips": player.chips,
+                    "status": player.is_active.value,
+                    "is_bot": player.is_bot,
+                    "pocket_cards": [str(card) for card in player.pocket] if player.pocket else [],
+                    "current_street_contribution": self.street_contributions[i],
+                    "is_all_in": i in self.all_in_players
+                }
+            else:
+                player_info = {
+                    "name": player.name,
+                    "position": self.get_player_position(i),
+                    "chips": player.chips,
+                    "status": player.is_active.value,
+                    "is_bot": player.is_bot,
+                    "current_street_contribution": self.street_contributions[i],
+                    "is_all_in": i in self.all_in_players
+                }
+
+            
+            if i == self.current_player_idx:
+                player_info.update({
+                    "available_actions": [action.value for action in self.get_available_actions()],
+                    "call_amount": self.get_call_amount() if Action.CALL in self.get_available_actions() else 0,
+                })
+                
+            game_state["players"].append(player_info)
+        
+        return game_state
     
 
     def get_create_game_json(self) -> dict:

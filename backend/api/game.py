@@ -54,8 +54,6 @@ async def start_hand(request: StartHandRequest):
 @router.post("/games/player-action")
 async def process_player_action(request: PlayerActionRequest):
     game_id = request.game_id
-    print(request.action)
-    print(request.amount)
     
     if game_id not in active_games:
         raise HTTPException(status_code=404, detail="Game not found")
@@ -147,7 +145,7 @@ async def process_bot_action(request: StartHandRequest):
             )
             
         # Get bot's decision
-        game_state = game.get_game_state_json()
+        game_state = game.get_bot_state_json()
         decision = bot_controller.get_decision(game_state)
         # Parse and validate bot action
         action_str = decision.get("action", "fold")
