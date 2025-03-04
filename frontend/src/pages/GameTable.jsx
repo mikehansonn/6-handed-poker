@@ -129,7 +129,7 @@ const GameTable = () => {
           });
 
           // Wait 3 seconds before updating the game state
-          await new Promise(resolve => setTimeout(resolve, 3000));
+          await new Promise(resolve => setTimeout(resolve, 2000));
 
           // Remove comment just before updating game state
           setBotComment(null);
