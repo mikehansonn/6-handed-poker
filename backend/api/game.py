@@ -216,7 +216,8 @@ async def process_bot_action(request: StartHandRequest):
         return {
             "status": "success",
             "game_state": game.get_game_state_json(),
-            "table_comment": table_comment
+            "table_comment": table_comment,
+            "comment_index": current_player_idx
         }
         
     except Exception as e:

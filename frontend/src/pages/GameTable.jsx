@@ -125,7 +125,7 @@ const GameTable = () => {
         if (data.table_comment) {
           setBotComment({
             text: data.table_comment,
-            playerName: data.game_state.players[data.game_state.current_player_idx].name
+            playerName: data.game_state.players[data.comment_index].name
           });
 
           // Wait 3 seconds before updating the game state
