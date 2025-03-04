@@ -2,31 +2,30 @@
 TO FIX
 ------
 
-- Removal from the controller [THINK THIS IS FIXED] 
-- If players are all in (they have 0 chips) just progress the game don't let them call an action
+- If human players are all in (they have 0 chips) just progress the game don't let them call an action
 - If HumanUser loses send them back to the home page
 
-- Side pots printing is messed up on the frontend
 
+- Side pots printing is messed up on the frontend
 - Don't show other players hands on the frontend 
+- Add in end game button that returns you to the homepage and deletes your game_id  
 
 -----
 STEPS:
 -----
 
-1. Buy OpenAI credit and use my own key 
-2. Fix errors above
-3. Add in end game button that returns you to the homepage and deletes your game_id  
-4. Add In table talk from bots
-5. Add in AI coach
+0. Add in all bot personalities
+1. Update frontned for game setup pages 
+2. Add In table talk from bots
+3. Add in AI coach
 
 ------------
 RUNNING CODE
 ------------
 
-- Run frontend server: uvicorn main:app --reload which listen on http://127.0.0.1:8000
+- Run backend server: uvicorn main:app --reload which listen on http://127.0.0.1:8000
 
-- Run backend with npm install, npm start which runs on  http://localhost:3000.
+- Run frontend with npm install, npm start which runs on  http://localhost:3000.
 
 
 

@@ -10,7 +10,7 @@ export default function ChooseBots() {
   const maxBots = Number(count);
   
   // Example available bots
-  const AVAILABLE_BOTS = ['LooseLauren', 'TightTimmy', 'AggroAmy', 'CalmCarl'];
+  const AVAILABLE_BOTS = ['LooseLauren', 'TightTimmy', 'BalancedBenny', 'HyperHenry', 'PassivePete', 'TrickyTravis', 'MathMindy', 'ExploitingEve', 'WildcardWally', 'ManiacMitch']; 
   const [selectedBots, setSelectedBots] = useState([]);
 
   const toggleBot = (bot) => {

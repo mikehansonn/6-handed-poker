@@ -136,7 +136,9 @@ async def process_bot_action(request: StartHandRequest):
     try:
         # Verify current player is a bot
         current_player_idx = game.current_player_idx
+        print("here 0") 
         bot_controller = game.player_controllers[current_player_idx]
+        print("after here 0") 
         
         if bot_controller is None:
             raise HTTPException(
@@ -145,8 +147,11 @@ async def process_bot_action(request: StartHandRequest):
             )
             
         # Get bot's decision
+        print("here 1") 
         game_state = game.get_bot_state_json()
+        print("here 2") 
         decision = bot_controller.get_decision(game_state)
+        print("here 3") 
         # Parse and validate bot action
         action_str = decision.get("action", "fold")
         amount = decision.get("amount", 0)
@@ -229,8 +234,14 @@ async def create_game(request: CreateGameRequest):
     bot_factory = {
         "looselauren": lambda: OptimizedPokerBot(personality="loose"),
         "tighttimmy": lambda: OptimizedPokerBot(personality="tight"),
-        "aggroamy": lambda: OptimizedPokerBot(personality="aggressive"),
-        "calmcarl": lambda: OptimizedPokerBot(personality="conservative")
+        "balancedbenny": lambda: OptimizedPokerBot(personality="balanced"),
+        "hyperhenry": lambda: OptimizedPokerBot(personality="hyper_aggressive"),
+        "passivepete": lambda: OptimizedPokerBot(personality="passive"),
+        "trickytravis": lambda: OptimizedPokerBot(personality="trap_player"),
+        "mathmindy": lambda: OptimizedPokerBot(personality="math_based"),
+        "exploitingeve": lambda: OptimizedPokerBot(personality="exploitative"),
+        "wildcardwally": lambda: OptimizedPokerBot(personality="wildcard"),
+        "maniacmitch": lambda: OptimizedPokerBot(personality="maniac"), 
     }
     
     # Create bot controllers
