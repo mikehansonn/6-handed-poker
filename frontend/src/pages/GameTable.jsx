@@ -5,6 +5,7 @@ import ActionButtons from './ActionButtons';
 
 const GameTable = () => {
   const navigate = useNavigate();
+  const [botComment, setBotComment] = useState({});
   const [gameState, setGameState] = useState(() => {
     const state = window.history.state?.usr?.initialGameState;
     return state || null;
@@ -119,7 +120,24 @@ const GameTable = () => {
       while (true) {
         const botResponse = await api.post("/games/bot-action", {game_id: gameId});
         const data = await botResponse.data;
+        
+        // Set comment only if bot made a move
+        if (data.table_comment) {
+          setBotComment({
+            text: data.table_comment,
+            playerName: data.game_state.players[data.game_state.current_player_idx].name
+          });
+
+          // Wait 3 seconds before updating the game state
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          // Remove comment just before updating game state
+          setBotComment(null);
+        }
+        
+        // set game state after comment is complete
         setGameState(data.game_state);
+
         if (data.status === "hand_complete") {
           handleHandComplete(data.game_state);
           break;
@@ -216,6 +234,9 @@ const GameTable = () => {
       });
       const data = await response.data;
       setGameState(data.game_state);
+
+      // Reset comment since humans don't make comments
+      setBotComment(null);
 
       if (data.status === "hand_complete") {
         handleHandComplete(data.game_state);
@@ -378,6 +399,19 @@ const GameTable = () => {
           {/* Player positions */}
           {playerPositions.map(({ x, y, betX, betY, player, isButton }, index) => (
             <div key={index}>
+              {/* Only show bot comment if it's for this bot */}
+              {botComment && botComment.playerName === player.name && (
+                <div
+                  className="absolute z-50 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg shadow-md"
+                  style={{
+                    left: x + 50,  // Slightly offset from player
+                    top: y - 30,   // Slightly above player
+                  }}
+                >
+                  {botComment.text}
+                </div>
+              )}
+
               {/* Bet amount indicator */}
               {player.current_street_contribution > 0 && (
                 <div 

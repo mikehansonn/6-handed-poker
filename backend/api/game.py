@@ -6,6 +6,7 @@ import logging
 from game import TexasHoldem, Action, GameStage, HandEvaluator
 from bots import LooseLaurenBot, OptimizedPokerBot
 from enum import Enum
+import time
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -132,13 +133,13 @@ async def process_bot_action(request: StartHandRequest):
         raise HTTPException(status_code=404, detail="Game not found")
         
     game = active_games[game_id]
+
+    time.sleep(3) 
     
     try:
         # Verify current player is a bot
         current_player_idx = game.current_player_idx
-        print("here 0") 
         bot_controller = game.player_controllers[current_player_idx]
-        print("after here 0") 
         
         if bot_controller is None:
             raise HTTPException(
@@ -147,14 +148,13 @@ async def process_bot_action(request: StartHandRequest):
             )
             
         # Get bot's decision
-        print("here 1") 
         game_state = game.get_bot_state_json()
-        print("here 2") 
         decision = bot_controller.get_decision(game_state)
-        print("here 3") 
+    
         # Parse and validate bot action
         action_str = decision.get("action", "fold")
         amount = decision.get("amount", 0)
+        table_comment = decision.get("table_comment", "")
         
         try:
             action = Action(action_str)
@@ -215,7 +215,8 @@ async def process_bot_action(request: StartHandRequest):
                 
         return {
             "status": "success",
-            "game_state": game.get_game_state_json()
+            "game_state": game.get_game_state_json(),
+            "table_comment": table_comment
         }
         
     except Exception as e:

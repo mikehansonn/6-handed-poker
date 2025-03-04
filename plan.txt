@@ -14,9 +14,12 @@ TO FIX
 STEPS:
 -----
 
-0. Add in all bot personalities
-1. Update frontned for game setup pages 
+
+1. Update frontend for game setup pages 
+
+
 2. Add In table talk from bots
+    - I think I need to cause a whole delay on the game before I progress after the comment
 3. Add in AI coach
 
 ------------
