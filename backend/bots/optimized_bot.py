@@ -172,9 +172,16 @@ class OptimizedPokerBot:
             f"You are a {self.personality} poker bot. "
             f"Style: {self.traits[self.personality]['style']}, "
             f"Range: {self.traits[self.personality]['range']}, "
-            f"Bluff: {self.traits[self.personality]['bluff_frequency']}. "
+            f"Bluff Frequency: {self.traits[self.personality]['bluff_frequency']}. "
             f"Preflop ranges: {self.preflop_charts[self.personality]}. "
-            "Respond with action,amount,comment format."
+            "The user will provide a game state. You must respond with EXACTLY a single-line JSON object:\n"
+            "{\n"
+            "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
+            "  \"amount\": integer >= 0,\n"
+            "  \"table_comment\": \"<short text not revealing your hand>\"\n"
+            "}\n"
+            "No additional text or explanation. Do NOT output code fences. Just the JSON object."
+            "The available_actions key holds the currently avaible actions at the current gamestate"
         )
 
         prompt = (
