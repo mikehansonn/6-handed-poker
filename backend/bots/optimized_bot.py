@@ -178,7 +178,7 @@ class OptimizedPokerBot:
             "{\n"
             "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
             "  \"amount\": integer >= 0,\n"
-            "  \"table_comment\": \"<short text not revealing your hand>\"\n"
+            "  \"table_comment\": \"<short text not revealing your hand while talking like a poker player>\"\n"
             "}\n"
             "No additional text or explanation. Do NOT output code fences. Just the JSON object."
             "The available_actions key holds the currently avaible actions at the current gamestate"

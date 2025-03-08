@@ -9,6 +9,7 @@ export default function ChooseBots() {
   const navigate = useNavigate();
   const count = searchParams.get('count') || '1';
   const maxBots = Number(count);
+  const cardSuits = ['♠', '♥', '♦', '♣'];
   
   // Enhanced bot data with more detailed descriptions and characteristics
   const AVAILABLE_BOTS = [
@@ -184,20 +185,20 @@ export default function ChooseBots() {
       <div className="fixed inset-0 z-0">
         <div className="absolute -inset-[10%] bg-gradient-radial from-emerald-500/10 via-transparent to-transparent blur-3xl"></div>
         
-        {/* Animated playing card symbols */}
-        <div className="overflow-hidden h-full w-full absolute">
-          {['♠', '♥', '♦', '♣'].flatMap((suit, suitIndex) => 
+        {/* Animated playing card symbols - FIXED with improved visibility */}
+        <div className="overflow-hidden h-full w-full absolute z-0">
+          {cardSuits.flatMap((suit, suitIndex) => 
             [...Array(5)].map((_, i) => (
               <motion.div 
                 key={`${suit}-${i}`}
                 initial={{ 
-                  x: Math.random() * 100 + '%', 
-                  y: -50,
+                  left: `${Math.random() * 100}%`, 
+                  top: '-50px',
                   rotate: Math.random() * 360,
-                  opacity: 0.05 + Math.random() * 0.1
+                  opacity: 0.2 + Math.random() * 0.15
                 }}
                 animate={{ 
-                  y: ['0%', '100%'],
+                  top: ['-50px', `${window.innerHeight + 50}px`],
                   rotate: [0, 360],
                 }}
                 transition={{ 
@@ -208,7 +209,7 @@ export default function ChooseBots() {
                 }}
                 className="absolute text-4xl sm:text-5xl pointer-events-none"
                 style={{
-                  color: suit === '♥' || suit === '♦' ? 'rgba(248, 113, 113, 0.1)' : 'rgba(248, 248, 248, 0.1)'
+                  color: suit === '♥' || suit === '♦' ? 'rgba(248, 113, 113, 0.4)' : 'rgba(248, 248, 248, 0.4)'
                 }}
               >
                 {suit}
