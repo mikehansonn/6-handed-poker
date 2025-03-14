@@ -696,7 +696,7 @@ class TexasHoldem:
                 "chips": player.chips,
                 "status": player.is_active.value,
                 "is_bot": player.is_bot,
-                "pocket_cards": [str(card) for card in player.pocket] if player.pocket else [],
+                "pocket_cards": [str(card) for card in player.pocket] if player.pocket and not player.is_bot else ["", ""],
                 "current_street_contribution": self.street_contributions[i],
                 "is_all_in": i in self.all_in_players
             }
