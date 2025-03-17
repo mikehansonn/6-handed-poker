@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from uuid import uuid4
 import logging
 from game import TexasHoldem, Action, GameStage, HandEvaluator
-from bots import LooseLaurenBot, OptimizedPokerBot
+from bots import OptimizedPokerBot, AIPokerCoach
 from enum import Enum
 import time
 
@@ -223,6 +223,35 @@ async def process_bot_action(request: StartHandRequest):
     except Exception as e:
         logger.error(f"Error processing bot action: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process bot action")
+    
+
+
+# ========== NEW COACH RECOMMENDATION ENDPOINT ==========
+@router.post("/games/coach-recommendation")
+async def get_coach_recommendation(request: StartHandRequest):
+    """
+    Uses AIPokerCoach to provide text-based advice for the current game state
+    """
+    game_id = request.game_id
+
+    if game_id not in active_games:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    game = active_games[game_id]
+
+    try:
+        # Use the full game state for coaching
+        game_state = game.get_game_state_json()
+
+        coach = AIPokerCoach()
+        advice_text = coach.get_advice(game_state)
+
+        return {"advice": advice_text}
+
+    except Exception as e:
+        logger.error(f"Error in coach recommendation: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve coach recommendation")
+
 
 
 @router.post("/games/create")

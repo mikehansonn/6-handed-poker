@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Recommendation from './Recommendation';
 
 const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handlePlayerAction }) => {
   const [sliderValue, setSliderValue] = useState(0);
@@ -26,6 +27,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
 
   const currentPlayer = gameState.players[gameState.current_player_idx];
   const isUserTurn = !currentPlayer.is_bot;
+  const hasHandStarted = ["preflop","flop","turn","river"].includes(gameState.game_stage);
   const availableActions = currentPlayer.available_actions || [];
 
   
@@ -206,6 +208,11 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
             </div>
           )}
         </div>
+        {hasHandStarted && (
+        <div className="h-full w-[400px] flex-shrink-0">
+          <Recommendation />
+        </div>
+      )}
       </div>
     )
   );

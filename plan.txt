@@ -35,3 +35,8 @@ RUNNING CODE
 
 
 - 
+-------------------------------------
+
+- The problem is start_hand is called after the AI_coach somehow, either we have to make sure it is called after
+  or define all of the necesary variables in the init function for TexasHoldem class 
+
