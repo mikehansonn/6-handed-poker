@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Recommendation from './Recommendation';
+import CoachChat from './CoachChat';
 
 const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handlePlayerAction }) => {
   const [sliderValue, setSliderValue] = useState(0);
@@ -29,7 +30,6 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
   const isUserTurn = !currentPlayer.is_bot;
   const hasHandStarted = ["preflop","flop","turn","river"].includes(gameState.game_stage);
   const availableActions = currentPlayer.available_actions || [];
-
   
   // Calculate min and max bet amounts
   const minBet = availableActions.includes('bet') 
@@ -86,9 +86,11 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
 
   return (
     isUserTurn && (
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 z-50 flex flex-row items-center justify-center">
-        {/* Horizontal container for all controls */}
-        <div className="flex flex-row items-center gap-4 bg-gray-800/80 p-3 rounded-lg backdrop-blur-sm">
+      <div className="fixed bottom-0 left-0 right-0 z-50 mb-6 flex justify-center">
+        {/* Container for both elements with absolute positioning */}
+        <div className="relative">
+          {/* Horizontal container for all controls - centered */}
+          <div className="flex flex-row items-center gap-4 bg-gray-800/80 p-3 rounded-lg backdrop-blur-sm shadow-lg">
           {/* Action Buttons with tooltips */}
           <div className="flex gap-3">
             {availableActions
@@ -208,11 +210,21 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
             </div>
           )}
         </div>
+        
+        {/* Recommendation component to the left */}
         {hasHandStarted && (
-        <div className="h-full w-[400px] flex-shrink-0">
-          <Recommendation />
+          <div className="absolute right-full bottom-0 mr-4">
+            <Recommendation />
+          </div>
+        )}
+        
+        {/* CoachChat component to the right */}
+        {hasHandStarted && (
+          <div className="absolute left-full bottom-0 ml-4">
+            <CoachChat />
+          </div>
+        )}
         </div>
-      )}
       </div>
     )
   );

@@ -137,14 +137,18 @@ class AIPokerCoach:
             f"Position Importance: {situation_info['Position Importance']}\n"
             f"Key Hands: {', '.join(situation_info['Key Hands'])}\n\n"
             f"Current Hole Cards: {hole_cards_str}\n\n"
-            "Return exactly one short paragraph referencing these hole cards and the overall situation.\n"
-            "Do not reveal hidden opponent cards. Keep your response concise, no bullet points."
+            f"BB: $2, SB: $1\n\n"
+            "Respond with exactly a single-line JSON object:\n"
+            "{\n"
+            "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
+            "  \"coach_tip\": \"Return exactly one short paragraph referencing these hole cards and the overall situation. Do not reveal hidden opponent cards. Keep your response concise, no bullet points."
+            "\n}"
         )
 
         # The user prompt includes the full game state for reference
         user_prompt = (
             f"Here is the current game state:\n\n{formatted_state}\n\n"
-            "Please offer a concise single-paragraph strategy recommendation."
+            "Based on this situation, return a JSON object with action and coach_tip."
         )
 
         try:
@@ -157,8 +161,101 @@ class AIPokerCoach:
                 max_tokens=150
             )
             coaching_text = response.choices[0].message.content.strip()
+            parsed_results = json.loads(coaching_text)
 
-            return coaching_text
+            return parsed_results
 
+        except Exception as e:
+            return f"Error occurred while fetching advice from AI: {str(e)}"
+            
+    def ask_coach(self, question: str, game_state=None) -> str:
+        """
+        Allows the player to ask open-ended questions to the AI Poker Coach.
+        
+        Parameters:
+        question (str): The player's question about poker strategy or the current game
+        game_state (dict, optional): The current game state if relevant to the question
+        
+        Returns:
+        str: The coach's response to the player's question
+        """
+        # Build context from the coach's knowledge base
+        preflop_info = (
+            f"Basic Preflop Range:\n"
+            f"  Raise: {self.basic_preflop_range['raise']}\n"
+            f"  Call:  {self.basic_preflop_range['call']}\n"
+            f"  Fold:  {self.basic_preflop_range['fold']}\n"
+        )
+        
+        stack_info = ""
+        for situation, details in self.general_situations.items():
+            stack_info += (
+                f"{situation}:\n"
+                f"  Play Style: {details['Play Style']}\n"
+                f"  Position Importance: {details['Position Importance']}\n"
+                f"  Key Hands: {', '.join(details['Key Hands'])}\n\n"
+            )
+        
+        # Include current game state info if provided
+        game_context = ""
+        current_player_info = ""
+        if game_state:
+            game_context = self._format_game_state(game_state)
+            
+            # Extract current player's data if available
+            current_player_idx = game_state.get("current_player_idx", 0)
+            if current_player_idx < len(game_state.get("players", [])):
+                player_data = game_state.get("players", [{}])[current_player_idx]
+                stack_size = player_data.get("chips", 0)
+                big_blind = game_state.get("big_blind", 0)
+                hole_cards = player_data.get("pocket_cards", ["", ""])
+                hole_cards_str = ", ".join(hole_cards)
+                
+                situation_key = self._determine_stack_situation(stack_size, big_blind)
+                
+                current_player_info = (
+                    f"Your current hole cards: {hole_cards_str}\n"
+                    f"Your stack situation: {situation_key}\n"
+                    f"BB: ${big_blind}, SB: ${big_blind/2}\n"
+                )
+        
+        # Build the system message with all relevant poker knowledge
+        system_msg = (
+            "You are an AI Poker Coach with expertise in Texas Hold'em. Your role is to provide helpful, "
+            "accurate poker advice based on your knowledge of poker strategy, odds, and game dynamics. "
+            "Be conversational but concise, focusing on practical advice a player can apply.\n\n"
+            f"{preflop_info}\n\n"
+            f"Stack-Based Strategy Guidelines:\n{stack_info}\n"
+            "Important poker concepts to consider:\n"
+            "- Position (early, middle, late, blinds)\n"
+            "- Pot odds and implied odds\n"
+            "- Hand ranges and reading opponents\n"
+            "- Tournament vs. cash game strategies\n"
+            "- Stack-to-pot ratio considerations\n"
+            "- Blind stealing and defense\n"
+            "- General bet sizing principles\n"
+        )
+        
+        # The user prompt includes the player's question and game context if available
+        user_prompt = question
+        if game_context:
+            user_prompt = (
+                f"Current Game State:\n{game_context}\n"
+                f"{current_player_info}\n"
+                f"My question: {question}"
+            )
+        
+        try:
+            response = self.client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": system_msg},
+                    {"role": "user", "content": user_prompt}
+                ],
+                max_tokens=300
+            )
+            coaching_response = response.choices[0].message.content.strip()
+            return coaching_response
+        
         except Exception as e:
             return f"Error occurred while fetching advice from AI: {str(e)}"

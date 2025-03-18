@@ -28,6 +28,10 @@ class PlayerActionRequest(BaseModel):
 class StartHandRequest(BaseModel):
     game_id: str
 
+class CoachQuestionRequest(BaseModel):
+    game_id: str
+    question: str
+
 @router.post("/games/start-hand")
 async def start_hand(request: StartHandRequest):
     """
@@ -252,6 +256,32 @@ async def get_coach_recommendation(request: StartHandRequest):
         logger.error(f"Error in coach recommendation: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to retrieve coach recommendation")
 
+
+# ========== NEW COACH RECOMMENDATION ENDPOINT ==========
+@router.post("/games/coach-question")
+async def coach_answer_question(request: CoachQuestionRequest):
+    """
+    Uses AIPokerCoach to provide text-based advice for the current game state
+    """
+    game_id = request.game_id
+
+    if game_id not in active_games:
+        raise HTTPException(status_code=404, detail="Game not found")
+
+    game = active_games[game_id]
+
+    try:
+        # Use the full game state for coaching
+        game_state = game.get_game_state_json()
+
+        coach = AIPokerCoach()
+        advice_text = coach.ask_coach(request.question, game_state)
+
+        return {"advice": advice_text}
+
+    except Exception as e:
+        logger.error(f"Error in coach recommendation: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to retrieve coach recommendation")
 
 
 @router.post("/games/create")
