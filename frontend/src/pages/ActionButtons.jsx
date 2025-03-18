@@ -134,7 +134,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                     <span className="text-white font-medium">$</span>
                     <input
                       type="number"
-                      className="px-3 py-2 rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-20 text-lg"
+                      className="px-3 py-2 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-20 text-lg"
                       value={betAmount}
                       onChange={(e) => {
                         const value = parseInt(e.target.value) || 0;

@@ -106,7 +106,7 @@ async def process_player_action(request: PlayerActionRequest):
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
                                      for p in game.players]
                     winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
-                    
+                    print(winner_shares)
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)
@@ -205,7 +205,7 @@ async def process_bot_action(request: StartHandRequest):
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
                                      for p in game.players]
                     winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
-                    
+                    print(winner_shares)
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)

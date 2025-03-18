@@ -60,6 +60,12 @@ const CoachChat = () => {
     
     if (!inputValue.trim()) return;
     
+    // Auto-expand the chat when user sends a message
+    if (!isExpanded) {
+      setIsExpanded(true);
+      localStorage.setItem("coach_chat_expanded", JSON.stringify(true));
+    }
+    
     const userMessage = {
       id: Date.now(),
       sender: 'user',
@@ -121,7 +127,7 @@ const CoachChat = () => {
             className="text-gray-400 hover:text-white transition-colors"
             title={isExpanded ? "Collapse chat" : "Expand chat"}
           >
-            {isExpanded ? '▼' : '▶'}
+            {isExpanded ? '▼' : '▲'}
           </button>
         </div>
       </div>

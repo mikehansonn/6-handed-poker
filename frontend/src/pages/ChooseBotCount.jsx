@@ -167,9 +167,6 @@ export default function ChooseBotCount() {
               
               <div className="relative w-full">
                 <input
-                  type="number"
-                  min="1"
-                  max="5"
                   value={botCount}
                   onChange={handleInputChange}
                   className="w-full bg-gray-700 border-2 border-gray-600 focus:border-emerald-500 rounded-lg py-2 px-4 text-center text-xl font-bold text-white transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500/50"

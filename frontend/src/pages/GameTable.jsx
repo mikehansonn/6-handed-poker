@@ -242,6 +242,7 @@ const GameTable = () => {
       setBotComment(null);
 
       if (data.status === "hand_complete") {
+        console.log(data.game_state);
         handleHandComplete(data.game_state);
       } else if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();
@@ -305,7 +306,7 @@ const GameTable = () => {
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white p-4 flex flex-col pt-16">
       {/* Game Table */}
-      <div className="flex justify-center items-center mt-4">
+      <div className="flex justify-center items-center mt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
