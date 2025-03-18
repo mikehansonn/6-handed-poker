@@ -1,5 +1,5 @@
 // file: Recommendation.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import api from './api'; // same axios instance
 
 const Recommendation = () => {
@@ -7,11 +7,16 @@ const Recommendation = () => {
   const [action, setAction] = useState('');
   const [error, setError] = useState(null);
   const [hasFetched, setHasFetched] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(() => {
     // Initialize from localStorage, default to false if not found
     const hiddenState = localStorage.getItem("coach_hidden");
     return hiddenState ? JSON.parse(hiddenState) : false;
   });
+  
+  // Add these refs to track game state and prevent duplicate API calls
+  const fetchingRef = useRef(false);
+  const lastGameStateRef = useRef(null);
 
   // Color scheme matching ActionButtons component
   const actionStyles = {
@@ -28,44 +33,87 @@ const Recommendation = () => {
     setIsHidden(newHiddenState);
     localStorage.setItem("coach_hidden", JSON.stringify(newHiddenState));
   };
+  
+  // Function to get current game state from localStorage
+  const getCurrentGameState = () => {
+    try {
+      // First, try to get game state from window.history
+      const historyState = window.history.state?.usr?.gameState;
+      if (historyState) return JSON.stringify(historyState);
+      
+      // Fallback to localStorage if available
+      const gameIdObj = JSON.parse(localStorage.getItem("game_id"));
+      return gameIdObj?.gameState ? JSON.stringify(gameIdObj.gameState) : null;
+    } catch (err) {
+      console.error("Error getting game state:", err);
+      return null;
+    }
+  };
 
   useEffect(() => {
-    // Skip fetching if hidden mode is enabled
-    if (isHidden) {
-      setHasFetched(true);
-      return;
-    }
-
-    const localGameIdObj = JSON.parse(localStorage.getItem("game_id"));
-    const gameId = localGameIdObj?.value || null;
-
-    if (!gameId) {
-      console.log("No gameId found in localStorage.");
-      setHasFetched(true);
-      return;
-    }
-
+    // Function to fetch advice
     const fetchAdvice = async () => {
-      console.log("Fetching coach recommendation with gameId:", gameId);
+      // Skip if already fetching, hidden, or no game ID
+      if (fetchingRef.current || isHidden) {
+        return;
+      }
+
+      const localGameIdObj = JSON.parse(localStorage.getItem("game_id"));
+      const gameId = localGameIdObj?.value || null;
+      
+      if (!gameId) {
+        console.log("No gameId found in localStorage.");
+        setHasFetched(true);
+        return;
+      }
+      
+      // Get current game state to compare
+      const currentGameState = getCurrentGameState();
+      
+      // Skip if the game state hasn't changed
+      if (currentGameState && currentGameState === lastGameStateRef.current) {
+        return;
+      }
+      
+      // Update refs to prevent duplicate calls
+      fetchingRef.current = true;
+      lastGameStateRef.current = currentGameState;
+      setIsLoading(true);
 
       try {
+        console.log("Fetching coach recommendation with gameId:", gameId);
         const response = await api.post("/games/coach-recommendation", {
           game_id: gameId
         });
         const data = await response.data;
-        console.log("Coach Recommendation Data:", data);
-
+        
         setAdvice(data.advice.coach_tip || "");
         setAction(data.advice.action || "");
+        setError(null);
       } catch (err) {
         console.error("Error fetching advice:", err);
         setError(err.message);
       } finally {
         setHasFetched(true);
+        setIsLoading(false);
+        fetchingRef.current = false;
       }
     };
 
+    // Only fetch when component mounts or isHidden changes
     fetchAdvice();
+    
+    // Set up a custom event listener to trigger advice fetching
+    // This will be dispatched from GameTable when a player makes a move
+    const handleGameStateUpdate = () => {
+      fetchAdvice();
+    };
+    
+    window.addEventListener('gameStateUpdated', handleGameStateUpdate);
+    
+    return () => {
+      window.removeEventListener('gameStateUpdated', handleGameStateUpdate);
+    };
   }, [isHidden]);
 
   // Hidden mode component
@@ -89,7 +137,7 @@ const Recommendation = () => {
     );
   }
 
-  if (!hasFetched && !error) {
+  if (isLoading && !hasFetched) {
     return (
       <div className="bg-gray-800/80 backdrop-blur-sm text-white p-4 rounded-lg ml-4 shadow-lg border-l-4 border-blue-500 animate-pulse w-96">
         <div className="flex items-center justify-between">

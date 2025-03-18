@@ -141,7 +141,7 @@ class AIPokerCoach:
             "Respond with exactly a single-line JSON object:\n"
             "{\n"
             "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
-            "  \"coach_tip\": \"Return exactly one short paragraph referencing these hole cards and the overall situation. Do not reveal hidden opponent cards. Keep your response concise, no bullet points."
+            "  \"coach_tip\": \"Return exactly one short paragraph referencing these hole cards and the overall situation. If bet or raise, recommend an amount. Do not reveal hidden opponent cards. Keep your response concise, no bullet points."
             "\n}"
         )
 
@@ -252,7 +252,7 @@ class AIPokerCoach:
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": user_prompt}
                 ],
-                max_tokens=300
+                max_tokens=150
             )
             coaching_response = response.choices[0].message.content.strip()
             return coaching_response

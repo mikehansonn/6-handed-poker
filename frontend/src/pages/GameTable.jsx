@@ -116,6 +116,29 @@ const GameTable = () => {
     return () => clearTimeout(timer);
   }, [winner, gameEndState]);
 
+  const updateGameState = (newGameState) => {
+    // Update the local state
+    setGameState(newGameState);
+    
+    // Store in history.state for persistence
+    const currentState = window.history.state || {};
+    const usr = currentState.usr || {};
+    
+    window.history.replaceState(
+      { 
+        ...currentState, 
+        usr: { 
+          ...usr, 
+          gameState: newGameState 
+        } 
+      }, 
+      ""
+    );
+    
+    // Dispatch a custom event to notify components like Recommendation
+    window.dispatchEvent(new CustomEvent('gameStateUpdated'));
+  };
+
   // All existing handler functions remain the same...
   const processBotActions = async () => {
     const gameId = JSON.parse(localStorage.getItem("game_id")).value;
@@ -139,7 +162,7 @@ const GameTable = () => {
         }
         
         // set game state after comment is complete
-        setGameState(data.game_state);
+        updateGameState(data.game_state);
 
         if (data.status === "hand_complete") {
           handleHandComplete(data.game_state);
@@ -196,7 +219,7 @@ const GameTable = () => {
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/start-hand", {game_id: gameId});
       const data = await response.data;
-      setGameState(data.game_state);
+      updateGameState(data.game_state);
       setCheckStarted(true);
 
       if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
@@ -236,7 +259,7 @@ const GameTable = () => {
         amount: amount
       });
       const data = await response.data;
-      setGameState(data.game_state);
+      updateGameState(data.game_state);
 
       // Reset comment since humans don't make comments
       setBotComment(null);
