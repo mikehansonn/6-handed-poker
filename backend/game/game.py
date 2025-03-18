@@ -693,6 +693,9 @@ class TexasHoldem:
         }
         
         for i, player in enumerate(self.players):
+            if player.is_active == Status.FOLDED:
+                player.pocket = None
+                
             player_info = {
                 "name": player.name,
                 "position": self.get_player_position(i),
