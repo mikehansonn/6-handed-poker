@@ -73,7 +73,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
     
     return [
       { label: "Min", value: minBet },
-      { label: "1/2 Pot", value: halfPot },
+      { label: "1/2", value: halfPot },
       { label: "Pot", value: potSize },
       { label: "All In", value: allIn }
     ].filter((option, index, self) => 
@@ -89,17 +89,17 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
       <div className="fixed bottom-0 left-0 right-0 z-50 mb-6 flex justify-center">
         {/* Container for both elements with absolute positioning */}
         <div className="relative">
-          {/* Horizontal container for all controls - centered */}
-          <div className="flex flex-row items-center gap-4 bg-gray-800/80 p-3 rounded-lg backdrop-blur-sm shadow-lg">
-          {/* Action Buttons with tooltips */}
-          <div className="flex gap-3">
+          {/* Horizontal container for all controls - centered with reduced width */}
+          <div className="flex flex-row items-center gap-3 bg-gray-800/80 p-2 rounded-lg backdrop-blur-sm shadow-lg max-w-lg">
+          {/* Action Buttons with tooltips - smaller buttons */}
+          <div className="flex gap-2">
             {availableActions
               .filter(action => action !== 'bet' && action !== 'raise')
               .map(action => (
                 <div key={action} className="relative group">
                   <button
                     onClick={() => handleActionClick(action)}
-                    className={`${buttonStyles[action]} flex text-white px-6 py-3 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg uppercase tracking-wide relative`}
+                    className={`${buttonStyles[action]} flex text-white px-4 py-2 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg uppercase tracking-wide text-sm relative`}
                   >
                     <span>{action}</span>
                     {action === 'call' && currentPlayer.call_amount ? 
@@ -108,7 +108,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                       </span> : null
                     }
                   </button>
-                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-sm rounded-lg whitespace-nowrap pointer-events-none">
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none">
                     {buttonDescriptions[action]}
                   </div>
                 </div>
@@ -117,84 +117,63 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
 
           {/* Vertical separator when betting actions are available */}
           {hasBettingAction && availableActions.some(action => action !== 'bet' && action !== 'raise') && (
-            <div className="h-16 w-px bg-gray-600 mx-2"></div>
+            <div className="h-12 w-px bg-gray-600 mx-1"></div>
           )}
 
-          {/* Bet/Raise Input - Automatically displayed when available */}
+          {/* Bet/Raise Input - Automatically displayed when available - more compact */}
           {hasBettingAction && (
-            <div className="flex flex-row items-center gap-4">
-              <div className="flex flex-col gap-2">
-                <div className="text-white font-bold text-lg">
-                  {availableActions.includes('bet') ? 'Make Bet' : 'Raise Bet'}
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  {/* Input field and amount display */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-white font-medium">$</span>
-                    <input
-                      type="number"
-                      className="px-3 py-2 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-20 text-lg"
-                      value={betAmount}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 0;
-                        if (value >= minBet && value <= maxBet) {
-                          setBetAmount(value);
-                          setSliderValue(value);
-                        }
-                      }}
-                      min={minBet}
-                      max={maxBet}
-                    />
-                  </div>
-                  
-                  {/* Slider with tooltip */}
-                  <div className="relative w-40">
-                    <input
-                      type="range"
-                      min={minBet}
-                      max={maxBet}
-                      value={sliderValue}
-                      onChange={handleSliderChange}
-                      onMouseEnter={() => setShowTooltip(true)}
-                      onMouseLeave={() => setShowTooltip(false)}
-                      className="w-full h-3 bg-gray-600 rounded-lg appearance-none cursor-pointer"
-                      style={{
-                        background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 100%)`,
-                      }}
-                    />
-                    {showTooltip && (
-                      <div 
-                        className="absolute -top-8 px-2 py-1 bg-gray-900 text-white text-xs rounded pointer-events-none"
-                        style={{ 
-                          left: `calc(${((sliderValue - minBet) / (maxBet - minBet)) * 100}% - 20px)` 
-                        }}
-                      >
-                        ${sliderValue}
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div className="flex flex-col gap-1">
+              <div className="text-white font-bold text-sm">
+                {availableActions.includes('bet') ? 'Bet' : 'Raise'}
               </div>
-
-              {/* Vertical layout for preset amounts and confirm button */}
-              <div className="flex flex-col gap-2">
-                {/* Preset bet amount buttons in a grid */}
-                <div className="flex gap-2">
-                  {getPresetBetAmounts().map((preset, index) => (
-                    <button
-                      key={index}
-                      onClick={() => {
-                        setBetAmount(preset.value);
-                        setSliderValue(preset.value);
-                      }}
-                      className="bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded text-sm transition-colors"
-                    >
-                      {preset.label} ${preset.value}
-                    </button>
-                  ))}
+              
+              <div className="flex items-center gap-2">
+                {/* Input field and slider in more compact layout */}
+                <div className="flex items-center">
+                  <span className="text-white font-medium text-sm">$</span>
+                  <input
+                    type="number"
+                    className="px-2 py-1 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-16 text-sm"
+                    value={betAmount}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value) || 0;
+                      if (value >= minBet && value <= maxBet) {
+                        setBetAmount(value);
+                        setSliderValue(value);
+                      }
+                    }}
+                    min={minBet}
+                    max={maxBet}
+                  />
                 </div>
                 
+                {/* Slider with tooltip */}
+                <div className="relative w-24">
+                  <input
+                    type="range"
+                    min={minBet}
+                    max={maxBet}
+                    value={sliderValue}
+                    onChange={handleSliderChange}
+                    onMouseEnter={() => setShowTooltip(true)}
+                    onMouseLeave={() => setShowTooltip(false)}
+                    className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 100%)`,
+                    }}
+                  />
+                  {showTooltip && (
+                    <div 
+                      className="absolute -top-6 px-2 py-1 bg-gray-900 text-white text-xs rounded pointer-events-none"
+                      style={{ 
+                        left: `calc(${((sliderValue - minBet) / (maxBet - minBet)) * 100}% - 15px)` 
+                      }}
+                    >
+                      ${sliderValue}
+                    </div>
+                  )}
+                </div>
+              
                 {/* Confirm button */}
                 <button 
                   onClick={() => {
@@ -202,10 +181,26 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                     // Call handlePlayerAction directly with both action and amount
                     handlePlayerAction(action, parseInt(betAmount));
                   }}
-                  className={`${availableActions.includes('bet') ? buttonStyles.bet : buttonStyles.raise} text-white px-4 py-2 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg w-full`}
+                  className={`${availableActions.includes('bet') ? buttonStyles.bet : buttonStyles.raise} text-white px-3 py-1 rounded-lg text-sm font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg`}
                 >
                   {availableActions.includes('bet') ? 'Bet' : 'Raise'}
                 </button>
+              </div>
+              
+              {/* Preset bet amount buttons in a horizontal layout */}
+              <div className="flex gap-1 mt-1 justify-center">
+                {getPresetBetAmounts().map((preset, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      setBetAmount(preset.value);
+                      setSliderValue(preset.value);
+                    }}
+                    className="bg-gray-700 hover:bg-gray-600 text-white px-1 py-1 rounded text-xs transition-colors"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -213,14 +208,14 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
         
         {/* Recommendation component to the left */}
         {hasHandStarted && (
-          <div className="absolute right-full bottom-0 mr-4">
+          <div className="absolute right-full bottom-0 mr-3">
             <Recommendation />
           </div>
         )}
         
         {/* CoachChat component to the right */}
         {hasHandStarted && (
-          <div className="absolute left-full bottom-0 ml-4">
+          <div className="absolute left-full bottom-0 ml-3">
             <CoachChat />
           </div>
         )}
