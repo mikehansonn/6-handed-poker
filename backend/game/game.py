@@ -699,10 +699,15 @@ class TexasHoldem:
                 "chips": player.chips,
                 "status": player.is_active.value,
                 "is_bot": player.is_bot,
-                "pocket_cards": [str(card) for card in player.pocket] if player.pocket and not player.is_bot else ["", ""],
+                "pocket_cards": [str(card) for card in player.pocket] if self.current_stage == GameStage.SHOWDOWN or (player.pocket and not player.is_bot) else ["", ""],
                 "current_street_contribution": self.street_contributions[i],
                 "is_all_in": i in self.all_in_players
             }
+
+            if player.is_active == Status.FOLDED:
+                player_info["pocket_cards"] = None
+            
+
             
             if i == self.current_player_idx:
                 player_info.update({

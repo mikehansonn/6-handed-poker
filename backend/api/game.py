@@ -100,6 +100,7 @@ async def process_player_action(request: PlayerActionRequest):
                 game.reset_street_bets()
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
+                game.current_stage = GameStage.SHOWDOWN
                 active_players = game.get_non_folded_players()
                 
                 for pot in game.pots:
