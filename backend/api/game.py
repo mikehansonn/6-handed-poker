@@ -153,7 +153,7 @@ async def process_bot_action(request: StartHandRequest):
             
         # Get bot's decision
         game_state = game.get_bot_state_json()
-        decision = bot_controller.get_decision(game_state)
+        decision = bot_controller.get_decision(game_state, game.get_min_raise())
     
         # Parse and validate bot action
         action_str = decision.get("action", "fold")

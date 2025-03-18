@@ -217,7 +217,7 @@ class OptimizedPokerBot:
 
 
 
-    def _generate_decision(self, game_state) -> dict:
+    def _generate_decision(self, game_state, game_min_raise) -> dict:
         """
         Generates an action based on the current game state,
         factoring in personality, stack situation, and 
@@ -321,10 +321,14 @@ class OptimizedPokerBot:
                 max_tokens=50
             )
             result = response.choices[0].message.content.strip()
+            print(result)
             parsed_response = json.loads(result)
 
             # Validate required keys
             if all(k in parsed_response for k in ("action", "amount", "table_comment")):
+                if parsed_response["action"] == "raise" and parsed_response["amount"] < game_min_raise:
+                    parsed_response["amount"] = game_min_raise
+                
                 return parsed_response
             else:
                 return {
@@ -337,6 +341,6 @@ class OptimizedPokerBot:
             return {"action": "fold", "amount": 0, "table_comment": f"Error occurred: {str(e)}"}
 
 
-    def get_decision(self, game_state) -> dict:
+    def get_decision(self, game_state, game_min_raise) -> dict:
         """Public method to fetch the bot's final decision object."""
-        return self._generate_decision(game_state)
+        return self._generate_decision(game_state, game_min_raise)

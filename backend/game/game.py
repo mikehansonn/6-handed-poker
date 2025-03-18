@@ -86,6 +86,9 @@ class TexasHoldem:
     def get_total_pot(self) -> int:
         return sum(pot.amount for pot in self.pots)
     
+    def get_min_raise(self) -> int:
+        return self.current_bet + self.min_raise
+    
     def create_side_pot(self, all_in_amount: int):
         all_in_amounts = []
         for i, player in enumerate(self.players):
