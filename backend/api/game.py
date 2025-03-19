@@ -107,7 +107,6 @@ async def process_player_action(request: PlayerActionRequest):
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
                                      for p in game.players]
                     winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
-                    print(winner_shares)
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)
@@ -142,7 +141,6 @@ async def process_bot_action(request: StartHandRequest):
     time.sleep(2) 
     
     try:
-        print("1")
         # Verify current player is a bot
         current_player_idx = game.current_player_idx
         bot_controller = game.player_controllers[current_player_idx]
@@ -153,34 +151,28 @@ async def process_bot_action(request: StartHandRequest):
                 detail="Current player is not a bot"
             )
         
-        print("2")
         # Get bot's decision
         game_state = game.get_bot_state_json()
         decision = bot_controller.get_decision(game_state, game.get_min_raise())
     
-        print("3")
         # Parse and validate bot action
         action_str = decision.get("action", "fold")
         amount = decision.get("amount", 0)
         table_comment = decision.get("table_comment", "")
         
-        print("4")
         try:
             action = Action(action_str)
         except ValueError:
             action = Action.FOLD
             amount = 0
             
-        print("5")
         if action not in game.get_available_actions():
             action = Action.FOLD
             amount = 0
-            
-        print("6")
+                  
         # Process the action
         betting_complete = game.process_action(action, amount)
         
-        print("7")
         # Check if hand is over
         non_folded_players = game.get_non_folded_players()
         if len(non_folded_players) == 1:
@@ -194,7 +186,6 @@ async def process_bot_action(request: StartHandRequest):
                 "game_state": game.get_game_state_json()
             }
 
-        print("8") 
         # If betting round is complete, advance game stage
         if betting_complete:
             if game.current_stage == GameStage.PREFLOP:
@@ -208,22 +199,17 @@ async def process_bot_action(request: StartHandRequest):
                 game.reset_street_bets()
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
-                print("9")
                 active_players = game.get_non_folded_players()
                 
-                print("10")
                 for pot in game.pots:
-                    print("11")
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
                                      for p in game.players]
                     winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
-                    print(winner_shares)
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)
                         winner.chips += amount
                     pot.amount = 0
-                    print("12")
                     
                 return {
                     "status": "hand_complete",
