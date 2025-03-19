@@ -101,6 +101,7 @@ export default function ChooseBots() {
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [filterStyle, setFilterStyle] = useState('all');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [isRandomSelecting, setIsRandomSelecting] = useState(false);
 
   // Filter bots based on selected filters
   const filteredBots = AVAILABLE_BOTS.filter(bot => {
@@ -120,6 +121,93 @@ export default function ChooseBots() {
         setTimeout(() => setShowConfetti(false), 1000);
       }
     }
+  };
+
+  // Function to randomly select opponents
+  const handleRandomSelection = () => {
+    if (isRandomSelecting || isLoading) return;
+    
+    // Clear current selection first
+    setSelectedBots([]);
+    setIsRandomSelecting(true);
+    
+    // Get all available bots (respecting current filters)
+    const availableBots = [...filteredBots];
+    const randomSelection = [];
+    
+    // Shuffle the available bots to ensure randomness
+    const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
+    
+    // Determine how many bots to select (either max allowed or all available if fewer)
+    const botsToSelect = Math.min(maxBots, shuffledBots.length);
+    
+    // Create a random selection animation
+    const selectNextBot = (index) => {
+      if (index >= botsToSelect) {
+        setIsRandomSelecting(false);
+        return;
+      }
+      
+      const selectedBot = shuffledBots[index];
+      
+      // Add to selection
+      randomSelection.push(selectedBot.id);
+      setSelectedBots([...randomSelection]);
+      
+      // Show confetti effect
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 400);
+      
+      // Select next bot with delay
+      setTimeout(() => selectNextBot(index + 1), 500);
+    };
+    
+    // Start the random selection process
+    selectNextBot(0);
+  };
+
+  // Option to fill table with random bots
+  const fillTableRandom = () => {
+    if (isRandomSelecting || isLoading) return;
+    
+    const remainingSlots = maxBots - selectedBots.length;
+    if (remainingSlots <= 0) return;
+    
+    setIsRandomSelecting(true);
+    
+    // Get available bots that are not already selected
+    const availableBots = filteredBots.filter(bot => !selectedBots.includes(bot.id));
+    
+    // Shuffle the available bots
+    const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
+    
+    // Determine how many more bots to select
+    const botsToSelect = Math.min(remainingSlots, shuffledBots.length);
+    const currentSelection = [...selectedBots];
+    
+    // Create a random selection animation for remaining slots
+    const selectNextBot = (index) => {
+      if (index >= botsToSelect) {
+        setIsRandomSelecting(false);
+        return;
+      }
+      
+      const selectedBot = shuffledBots[index];
+      
+      // Add to selection
+      currentSelection.push(selectedBot.id);
+      setSelectedBots([...currentSelection]);
+      
+      // Show confetti effect
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 400);
+      
+      // Select next bot with delay
+      setTimeout(() => selectNextBot(index + 1), 500);
+    };
+    
+    // Start the random selection process
+    selectNextBot(0);
   };
 
   const storeWithExpiry = (key, value, ttl) => {
@@ -310,6 +398,64 @@ export default function ChooseBots() {
                 </option>
               ))}
             </select>
+          </div>
+          
+          {/* Random Selection Buttons */}
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={handleRandomSelection}
+              disabled={isRandomSelecting || isLoading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className={`
+                px-4 py-1 text-sm rounded-lg flex items-center gap-2
+                ${isRandomSelecting ? 'bg-purple-700 text-white cursor-wait' : 'bg-purple-600 hover:bg-purple-500 text-white'}
+                transition-colors duration-200 border border-purple-500
+              `}
+            >
+              {isRandomSelecting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Selecting...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                  </svg>
+                  Random
+                </>
+              )}
+            </motion.button>
+            
+            {selectedBots.length > 0 && selectedBots.length < maxBots && (
+              <motion.button
+                onClick={fillTableRandom}
+                disabled={isRandomSelecting || isLoading}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className={`
+                  px-4 py-1 text-sm rounded-lg flex items-center gap-2
+                  ${isRandomSelecting ? 'bg-purple-700/70 text-white cursor-wait' : 'bg-purple-600/70 hover:bg-purple-500/70 text-white'}
+                  transition-colors duration-200 border border-purple-500/70
+                `}
+              >
+                {isRandomSelecting ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Filling...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M10 5a1 1 0 011 1v8a1 1 0 11-2 0V6a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    Fill Table
+                  </>
+                )}
+              </motion.button>
+            )}
           </div>
         </motion.div>
         
