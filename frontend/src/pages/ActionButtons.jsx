@@ -103,7 +103,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                   >
                     <span>{action}</span>
                     {action === 'call' && currentPlayer.call_amount ? 
-                      <span className="block text-xs mt-1 font-normal">
+                      <span className="items-center flex block text-xs font-normal">
                         ${currentPlayer.call_amount}
                       </span> : null
                     }
