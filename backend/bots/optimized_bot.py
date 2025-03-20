@@ -302,7 +302,7 @@ class OptimizedPokerBot:
             "{\n"
             "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
             "  \"amount\": integer >= 0,\n"
-            "  \"table_comment\": \"<short snarky, mean text, curse words, DO NOT REVEAL YOUR HAND>\"\n"
+            "  \"table_comment\": \"<short text, DO NOT REVEAL YOUR HAND>\",\n"
             "}"
         )
 

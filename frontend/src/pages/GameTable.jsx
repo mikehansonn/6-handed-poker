@@ -185,8 +185,11 @@ const GameTable = () => {
     const humanPlayer = finalGameState.players.find(p => !p.is_bot);
     const humanPlayerIndex = finalGameState.players.findIndex(p => !p.is_bot);
     
+    // Calculate the winner but don't display immediately
+    let winningPlayer;
+    
     if (nonFoldedPlayers.length === 1) {
-      setWinner(nonFoldedPlayers[0]);
+      winningPlayer = nonFoldedPlayers[0];
       
       // Update hand win stats if human player won
       if (nonFoldedPlayers[0] === humanPlayer) {
@@ -196,10 +199,9 @@ const GameTable = () => {
         }));
       }
     } else {
-      const winningPlayer = finalGameState.players.reduce((prev, current) => 
+      winningPlayer = finalGameState.players.reduce((prev, current) => 
         (current.chips > prev.chips) ? current : prev
       );
-      setWinner(winningPlayer);
       
       // Check if human player gained chips (won the hand)
       if (humanPlayer && humanPlayer.chips > gameStats.finalChips) {
@@ -209,6 +211,11 @@ const GameTable = () => {
         }));
       }
     }
+    
+    // Wait 3 seconds before showing the winner
+    setTimeout(() => {
+      setWinner(winningPlayer);
+    }, 3000);
     
     // Set handComplete flag to trigger game end check
     setHandComplete(true);
@@ -469,7 +476,7 @@ const GameTable = () => {
                       ${gameState.current_player_idx === index ? 
                         'ring-4 ring-yellow-400 bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-yellow-500/50' : 
                         'bg-gradient-to-br from-gray-800/90 to-gray-900/90 border border-gray-700 hover:border-gray-500'}
-                      ${player.status === 'folded' ? 'opacity-60' : ''}`}
+                      ${player.status === 'folded' ? 'opacity-50' : ''}`}
                   >
                     <div className="p-3 text-center">
                       <div className={`font-bold text-lg mb-1 ${!player.is_bot ? 'text-cyan-400' : 'text-white'}`}>
@@ -486,26 +493,6 @@ const GameTable = () => {
                             />
                           ))}
                         </div>
-                      )}
-                      
-                      {/* Status indicators */}
-                      {player.status === 'folded' && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="mt-2 bg-red-500 text-white text-sm py-1 px-3 rounded-full font-bold animate-pulse"
-                        >
-                          Folded
-                        </motion.div>
-                      )}
-                      {player.is_all_in && (
-                        <motion.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="mt-2 bg-orange-500 text-white text-sm py-1 px-3 rounded-full font-bold"
-                        >
-                          All-in
-                        </motion.div>
                       )}
                     </div>
                   </motion.div>
