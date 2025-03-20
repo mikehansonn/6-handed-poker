@@ -130,7 +130,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
               <div className="flex items-center gap-2">
                 {/* Input field and slider in more compact layout */}
                 <div className="flex items-center">
-                  <span className="text-white font-medium text-sm">$</span>
+                  <span className="text-white font-medium text-sm pr-1">$</span>
                   <input
                     type="number"
                     className="px-2 py-1 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-16 text-sm"

@@ -2,13 +2,9 @@
 TO FIX
 ------
 
-- If human players are all in (they have 0 chips) just progress the game don't let them call an action
-- If HumanUser loses send them back to the home page
-
-
-- Side pots printing is messed up on the frontend
-- Don't show other players hands on the frontend 
-- Add in end game button that returns you to the homepage and deletes your game_id  
+Pots still going to the wrong person sometimes
+Sometimes, a player will fold, and it will progress a card without giving everyone a chance to move
+Showdown is not flipping cards when the bot was the last to act on the river 
 
 -----
 STEPS:

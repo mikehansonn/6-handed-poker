@@ -165,6 +165,7 @@ const GameTable = () => {
         updateGameState(data.game_state);
 
         if (data.status === "hand_complete") {
+          console.log(data.game_state);
           handleHandComplete(data.game_state);
           break;
         }
@@ -283,6 +284,84 @@ const GameTable = () => {
     }
   };
 
+  function renderChipStack(amount) {
+    // Define chip values and colors
+    const chipValues = [
+      { value: 200, color: "from-black to-slate-800", border: "border-slate-600" },
+      { value: 100, color: "from-purple-700 to-purple-900", border: "border-purple-400" },
+      { value: 50, color: "from-black to-slate-900", border: "border-slate-400" },
+      { value: 25, color: "from-green-600 to-green-800", border: "border-green-400" },
+      { value: 5, color: "from-red-600 to-red-800", border: "border-red-400" },
+      { value: 1, color: "from-blue-600 to-blue-800", border: "border-blue-400" }
+    ];
+    
+    // Calculate how many of each chip to show
+    let remainingAmount = amount;
+    let chipCounts = {};
+    
+    chipValues.forEach(chip => {
+      const count = Math.floor(remainingAmount / chip.value);
+      if (count > 0) {
+        chipCounts[chip.value] = Math.min(count, 5); // Cap at 5 chips per denomination
+        remainingAmount -= chip.value * chipCounts[chip.value];
+      }
+    });
+    
+    // Generate chip elements
+    let chips = [];
+    let offset = 0;
+    
+    // Display at most 12 chips total for performance
+    let totalChips = 0;
+    
+    Object.entries(chipCounts).forEach(([value, count]) => {
+      const chipInfo = chipValues.find(c => c.value === parseInt(value));
+      
+      for (let i = 0; i < count && totalChips < 12; i++) {
+        // Calculate the chip display size based on its value
+        const sizeClass = parseInt(value) >= 100 ? "w-12 h-12" : "w-10 h-10";
+        
+        chips.push(
+          <motion.div 
+            key={`chip-${value}-${i}`}
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: -offset, opacity: 1 }}
+            exit={{ y: -20, opacity: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className={`${sizeClass} rounded-full bg-gradient-to-b ${chipInfo.color} absolute border-2 ${chipInfo.border} shadow-lg flex items-center justify-center`}
+            style={{ zIndex: 100 - totalChips }}
+          >
+            <div className={`${parseInt(value) >= 100 ? "w-8 h-8" : "w-6 h-6"} rounded-full border border-white/20 flex items-center justify-center text-white text-xs font-bold`}>
+              {parseInt(value)}
+            </div>
+          </motion.div>
+        );
+        
+        offset += 4; // Stack height offset
+        totalChips++;
+      }
+    });
+    
+    if (chips.length === 0) {
+      chips.push(
+        <motion.div 
+          key="chip-min"
+          className="w-10 h-10 rounded-full bg-gradient-to-b from-gray-600 to-gray-800 border-2 border-gray-400 shadow-lg flex items-center justify-center"
+        >
+          <div className="w-6 h-6 rounded-full border border-white/20 flex items-center justify-center text-white text-xs font-bold">
+            ${amount}
+          </div>
+        </motion.div>
+      );
+    }
+    
+    return (
+      <div className="relative" style={{ height: `${Math.max(40, offset + 20)}px`, width: "48px" }}>
+        {chips}
+      </div>
+    );
+  }
+
   if (!gameState) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950">
@@ -316,7 +395,7 @@ const GameTable = () => {
     
     const betScale = 0.5; // Place bets 60% of the way between center and player
     const betX = centerX - 24 + (ellipseA * betScale) * Math.cos(angle);
-    const betY = centerY - 24 + (ellipseB * betScale) * Math.sin(angle);
+    const betY = centerY - 10 + (ellipseB * betScale) * Math.sin(angle);
     
     // Adjust player card position to center the 120x120 card
     return { 
@@ -389,7 +468,7 @@ const GameTable = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.5 }}
-                className="absolute top-[52%] -translate-y-1/2 flex gap-2 p-2 rounded-xl"
+                className="absolute top-[46%] -translate-y-1/2 flex gap-2 p-2 rounded-xl"
               >
                 {gameState.community_cards.map((card, index) => (
                   <PlayingCard 
@@ -406,9 +485,16 @@ const GameTable = () => {
               transition={{ delay: 0.3, duration: 0.5 }}
               className="absolute top-[35%] flex flex-col items-center"
             >
-              <div className="bg-black/30 backdrop-blur-sm rounded-xl p-2 shadow-xl border border-emerald-800/40">
-                <div className="text-blue-400 text-2xl font-bold drop-shadow-lgtext-center">
-                  Pot: {gameState.total_pot || 0}
+              <div className="flex items-center gap-4">
+                {/* Pot amount text display */}
+                <div className="bg-black/50 backdrop-blur-sm rounded-xl p-2 shadow-xl border border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <div className="text-white text-2xl font-bold text-center">
+                      <span className="text-slate-400 text-xl mr-1">$</span>
+                      <span>{gameState.total_pot || 0}</span>
+                    </div>
+                    <div className="text-yellow-500 text-lg font-medium">Pot</div>
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -441,17 +527,27 @@ const GameTable = () => {
                 <AnimatePresence>
                   {player.current_street_contribution > 0 && (
                     <motion.div 
-                      initial={{ opacity: 0, scale: 0 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0 }}
-                      className="absolute z-20 transform -translate-[x-1/2] -translate-y-1/2"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="absolute z-20 transform -translate-x-1/2 -translate-y-1/2"
                       style={{ 
                         left: betX,
                         top: betY
                       }}
                     >
-                      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-4 py-2 rounded-full font-bold shadow-lg border-2 border-blue-500/50">
-                        ${player.current_street_contribution}
+                      <div className="relative flex flex-col items-center">
+                        {/* Chip stack visualization based on bet amount */}
+                        <div className="relative flex flex-col items-center">
+                          {/* Render different chip stacks based on bet amount */}
+                          {renderChipStack(player.current_street_contribution)}
+                          
+                          {/* Bet amount label */}
+                          <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-bold whitespace-nowrap">
+                            ${player.current_street_contribution}
+                          </div>
+                        </div>
                       </div>
                     </motion.div>
                   )}

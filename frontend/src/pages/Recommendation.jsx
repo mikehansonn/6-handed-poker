@@ -81,7 +81,6 @@ const Recommendation = () => {
       setIsLoading(true);
 
       try {
-        console.log("Fetching coach recommendation with gameId:", gameId);
         const response = await api.post("/games/coach-recommendation", {
           game_id: gameId
         });
