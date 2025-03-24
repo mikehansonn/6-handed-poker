@@ -229,6 +229,7 @@ class OptimizedPokerBot:
         current_player = game_state["players"][game_state["current_player_idx"]]
         current_stack = current_player["chips"]
         big_blind = game_state["big_blind"]
+        current_bet = game_state["current_bet"]
 
         # Determine stack situation
         situation_key = self._determine_stack_situation(current_stack, big_blind)
@@ -242,7 +243,7 @@ class OptimizedPokerBot:
         # Adjust bet/fold frequencies based on personality
         if self.personality in ["tight", "passive"]:
             base_bet_sizes = [min_bet, int(min_bet * 1.5)]
-            if random.random() < 0.20:
+            if random.random() < 0.20 and current_bet > 0:
                 return {
                     "action": "fold",
                     "amount": 0,
@@ -250,7 +251,7 @@ class OptimizedPokerBot:
                 }
         elif self.personality in ["loose", "exploitative"]:
             base_bet_sizes = [min_bet, min_bet * 2, min_bet * 3]
-            if random.random() < 0.10:
+            if random.random() < 0.10 and current_bet > 0:
                 return {
                     "action": "fold",
                     "amount": 0,
@@ -258,7 +259,7 @@ class OptimizedPokerBot:
                 }
         elif self.personality in ["hyper_aggressive", "maniac"]:
             base_bet_sizes = [min_bet * 2, min_bet * 3, max_bet]
-            if random.random() < 0.05:
+            if random.random() < 0.05 and current_bet > 0:
                 return {
                     "action": "fold",
                     "amount": 0,
@@ -266,7 +267,7 @@ class OptimizedPokerBot:
                 }
         else:
             # Default personalities (balanced, trap_player, math_based, wildcard)
-            if random.random() < 0.10:
+            if random.random() < 0.10 and current_bet > 0:
                 return {
                     "action": "fold",
                     "amount": 0,
