@@ -27,28 +27,6 @@ const GameTable = () => {
     bestHand: null
   });
 
-  // Track game statistics
-  useEffect(() => {
-    if (gameState) {
-      // Update handsPlayed count when a new hand starts
-      if (gameState.community_cards && gameState.community_cards.length === 0) {
-        setGameStats(prevStats => ({
-          ...prevStats,
-          handsPlayed: prevStats.handsPlayed + 1
-        }));
-      }
-      
-      // Track the human player's chips
-      const humanPlayer = gameState.players.find(p => !p.is_bot);
-      if (humanPlayer) {
-        setGameStats(prevStats => ({
-          ...prevStats,
-          finalChips: humanPlayer.chips
-        }));
-      }
-    }
-  }, [gameState]);
-
   // State to track game end conditions
   const [gameEndState, setGameEndState] = useState(null);
   const [handComplete, setHandComplete] = useState(false);
@@ -165,8 +143,8 @@ const GameTable = () => {
         updateGameState(data.game_state);
 
         if (data.status === "hand_complete") {
-          console.log(data.game_state);
-          handleHandComplete(data.game_state);
+          console.log(data);
+          handleHandComplete(data.game_state, data.winner);
           break;
         }
         if (!data.game_state.players[data.game_state.current_player_idx].is_bot) {
@@ -179,11 +157,39 @@ const GameTable = () => {
     }
   };
 
-  const handleHandComplete = (finalGameState) => {
+  const handleHandComplete = (finalGameState, winner) => {
+    const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
+    localStorage.setItem("total_hands_played", hands + 1);
+    const session_hands = parseInt(localStorage.getItem("session_hands_played")) || 0;
+    localStorage.setItem("session_hands_played", session_hands + 1);
+
+    if (winner.name == "HumanUser") {
+      const wins = parseInt(localStorage.getItem("total_hands_won")) || 0;
+      localStorage.setItem("total_hands_won", wins + 1);
+      const session_wins = parseInt(localStorage.getItem("session_hands_won")) || 0;
+      localStorage.setItem("session_hands_won", session_wins + 1);
+    }
+
+    if (gameState.community_cards && gameState.community_cards.length === 0) {
+      setGameStats(prevStats => ({
+        ...prevStats,
+        handsPlayed: prevStats.handsPlayed + 1
+      }));
+    }
+    
+    // Track the human player's chips
+    const humanPlayer = gameState.players.find(p => !p.is_bot);
+    if (humanPlayer) {
+      setGameStats(prevStats => ({
+        ...prevStats,
+        finalChips: humanPlayer.chips
+      }));
+    }
+    console.log("check");
     const nonFoldedPlayers = finalGameState.players.filter(p => p.status !== 'folded');
     
     // Check if the human player won this hand
-    const humanPlayer = finalGameState.players.find(p => !p.is_bot);
+    const humanPlayer1 = finalGameState.players.find(p => !p.is_bot);
     const humanPlayerIndex = finalGameState.players.findIndex(p => !p.is_bot);
     
     // Calculate the winner but don't display immediately
@@ -193,7 +199,7 @@ const GameTable = () => {
       winningPlayer = nonFoldedPlayers[0];
       
       // Update hand win stats if human player won
-      if (nonFoldedPlayers[0] === humanPlayer) {
+      if (nonFoldedPlayers[0] === humanPlayer1) {
         setGameStats(prevStats => ({
           ...prevStats,
           handsWon: prevStats.handsWon + 1
@@ -205,7 +211,7 @@ const GameTable = () => {
       );
       
       // Check if human player gained chips (won the hand)
-      if (humanPlayer && humanPlayer.chips > gameStats.finalChips) {
+      if (humanPlayer1 && humanPlayer1.chips > gameStats.finalChips) {
         setGameStats(prevStats => ({
           ...prevStats,
           handsWon: prevStats.handsWon + 1
@@ -273,8 +279,8 @@ const GameTable = () => {
       setBotComment(null);
 
       if (data.status === "hand_complete") {
-        console.log(data.game_state);
-        handleHandComplete(data.game_state);
+        console.log(data);
+        handleHandComplete(data.game_state, data.winner);
       } else if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();
       }

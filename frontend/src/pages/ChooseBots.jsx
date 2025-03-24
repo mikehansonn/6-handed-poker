@@ -236,6 +236,8 @@ export default function ChooseBots() {
       
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
       storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
+      localStorage.setItem("session_hands_played", 0);
+      localStorage.setItem("session_hands_won", 0);
       
       navigate('/game-table', { 
         state: { 

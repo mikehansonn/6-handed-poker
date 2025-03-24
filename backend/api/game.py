@@ -84,7 +84,8 @@ async def process_player_action(request: PlayerActionRequest):
                 pot.amount = 0
             return {
                 "status": "hand_complete",
-                "game_state": game.get_game_state_json()
+                "game_state": game.get_game_state_json(),
+                "winner": winner
             }
             
         # If betting round is complete, advance game stage
@@ -101,7 +102,8 @@ async def process_player_action(request: PlayerActionRequest):
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
                 game.current_stage = GameStage.SHOWDOWN
-                active_players = game.get_non_folded_players()
+                big_winner = 0
+                max_win = 0
                 
                 for pot in game.pots:
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
@@ -110,12 +112,16 @@ async def process_player_action(request: PlayerActionRequest):
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)
+                        if amount > max_win:
+                            big_winner = winner
+                            max_win = amount
                         winner.chips += amount
                     pot.amount = 0
                     
                 return {
                     "status": "hand_complete",
-                    "game_state": game.get_game_state_json()
+                    "game_state": game.get_game_state_json(),
+                    "winner": big_winner
                 }
                 
         return {
@@ -183,7 +189,8 @@ async def process_bot_action(request: StartHandRequest):
                 pot.amount = 0
             return {
                 "status": "hand_complete",
-                "game_state": game.get_game_state_json()
+                "game_state": game.get_game_state_json(),
+                "winner": winner
             }
 
         # If betting round is complete, advance game stage
@@ -200,7 +207,8 @@ async def process_bot_action(request: StartHandRequest):
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
                 game.current_stage = GameStage.SHOWDOWN
-                active_players = game.get_non_folded_players()
+                big_winner = 0
+                max_win = 0
                 
                 for pot in game.pots:
                     eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
@@ -209,12 +217,16 @@ async def process_bot_action(request: StartHandRequest):
                     for player_idx, share in winner_shares.items():
                         winner = game.players[player_idx]
                         amount = int(pot.amount * share)
+                        if amount > max_win:
+                            big_winner = winner
+                            max_win = amount
                         winner.chips += amount
                     pot.amount = 0
                     
                 return {
                     "status": "hand_complete",
-                    "game_state": game.get_game_state_json()
+                    "game_state": game.get_game_state_json(),
+                    "winner": big_winner
                 }
                 
         return {
