@@ -8,6 +8,7 @@ import PlayingCard from './PlayingCard';
 const GameTable = () => {
   const navigate = useNavigate();
   const [botComment, setBotComment] = useState({});
+  const [commentProgress, setCommentProgress] = useState(100);
   const [gameState, setGameState] = useState(() => {
     const state = window.history.state?.usr?.initialGameState;
     return state || null;
@@ -27,38 +28,50 @@ const GameTable = () => {
     bestHand: null
   });
 
-  // State to track game end conditions
   const [gameEndState, setGameEndState] = useState(null);
   const [handComplete, setHandComplete] = useState(false);
 
-  // Check for game end conditions ONLY after a hand is complete
   useEffect(() => {
-    // Only check when a hand has completed and we're not already in a game end state
+    let progressInterval;
+    setCommentProgress(100);
+    if (botComment && Object.keys(botComment).length > 0) {
+      // Reset progress to 100% when a new comment appears
+      
+      // Set up interval to decrease progress over 2000ms (comment display time)
+      progressInterval = setInterval(() => {
+        setCommentProgress(prev => {
+          if (prev <= 0) return 0;
+          return prev - 1;
+        });
+      }, 40); // Update every 20ms for smooth animation (100 steps in 2000ms)
+    }
+    
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
+  }, [botComment]);
+
+  useEffect(() => {
     if (handComplete && gameState && !gameEndState) {
       const humanPlayer = gameState.players.find(p => !p.is_bot);
       
-      // Check if human player has lost (out of chips after hand distribution)
       if (humanPlayer && humanPlayer.chips <= 0) {
         setGameEndState('lost');
         return;
       }
       
-      // Check if human player is the only one left with chips
       const playersWithChips = gameState.players.filter(p => p.chips > 0);
       if (playersWithChips.length === 1 && !playersWithChips[0].is_bot) {
         setGameEndState('won');
         return;
       }
       
-      // Reset handComplete flag if no end condition was met
       setHandComplete(false);
     }
   }, [handComplete, gameState, gameEndState]);
   
-  // Handle redirect after delay when game end is detected
   useEffect(() => {
     if (gameEndState) {
-      // Set a timer to navigate after 5 seconds
       const timer = setTimeout(() => {
         if (gameEndState === 'lost') {
           navigate('/game-lost', { 
@@ -75,7 +88,6 @@ const GameTable = () => {
     }
   }, [gameEndState, navigate, gameStats]);
 
-  // Existing game logic remains the same...
   useEffect(() => {
     const state = window.history.state?.usr?.initialGameState;
     if (state && !gameState) {
@@ -95,10 +107,8 @@ const GameTable = () => {
   }, [winner, gameEndState]);
 
   const updateGameState = (newGameState) => {
-    // Update the local state
     setGameState(newGameState);
     
-    // Store in history.state for persistence
     const currentState = window.history.state || {};
     const usr = currentState.usr || {};
     
@@ -113,11 +123,9 @@ const GameTable = () => {
       ""
     );
     
-    // Dispatch a custom event to notify components like Recommendation
     window.dispatchEvent(new CustomEvent('gameStateUpdated'));
   };
 
-  // All existing handler functions remain the same...
   const processBotActions = async () => {
     const gameId = JSON.parse(localStorage.getItem("game_id")).value;
     try {
@@ -125,22 +133,20 @@ const GameTable = () => {
         const botResponse = await api.post("/games/bot-action", {game_id: gameId});
         const data = await botResponse.data;
         
-        // Set comment only if bot made a move
         if (data.table_comment) {
           setBotComment({
             text: data.table_comment,
             playerName: data.game_state.players[data.comment_index].name
           });
 
-          // Wait 3 seconds before updating the game state
           await new Promise(resolve => setTimeout(resolve, 2000));
 
-          // Remove comment just before updating game state
-          setBotComment(null);
         }
         
-        // set game state after comment is complete
         updateGameState(data.game_state);
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        setBotComment(null);
 
         if (data.status === "hand_complete") {
           console.log(data);
@@ -163,7 +169,7 @@ const GameTable = () => {
     const session_hands = parseInt(localStorage.getItem("session_hands_played")) || 0;
     localStorage.setItem("session_hands_played", session_hands + 1);
 
-    if (winner.name == "HumanUser") {
+    if (winner.name === "HumanUser") {
       const wins = parseInt(localStorage.getItem("total_hands_won")) || 0;
       localStorage.setItem("total_hands_won", wins + 1);
       const session_wins = parseInt(localStorage.getItem("session_hands_won")) || 0;
@@ -177,7 +183,6 @@ const GameTable = () => {
       }));
     }
     
-    // Track the human player's chips
     const humanPlayer = gameState.players.find(p => !p.is_bot);
     if (humanPlayer) {
       setGameStats(prevStats => ({
@@ -185,20 +190,16 @@ const GameTable = () => {
         finalChips: humanPlayer.chips
       }));
     }
-    console.log("check");
     const nonFoldedPlayers = finalGameState.players.filter(p => p.status !== 'folded');
     
-    // Check if the human player won this hand
     const humanPlayer1 = finalGameState.players.find(p => !p.is_bot);
     const humanPlayerIndex = finalGameState.players.findIndex(p => !p.is_bot);
     
-    // Calculate the winner but don't display immediately
     let winningPlayer;
     
     if (nonFoldedPlayers.length === 1) {
       winningPlayer = nonFoldedPlayers[0];
       
-      // Update hand win stats if human player won
       if (nonFoldedPlayers[0] === humanPlayer1) {
         setGameStats(prevStats => ({
           ...prevStats,
@@ -210,7 +211,6 @@ const GameTable = () => {
         (current.chips > prev.chips) ? current : prev
       );
       
-      // Check if human player gained chips (won the hand)
       if (humanPlayer1 && humanPlayer1.chips > gameStats.finalChips) {
         setGameStats(prevStats => ({
           ...prevStats,
@@ -523,7 +523,12 @@ const GameTable = () => {
                     >
                       <div className="relative">
                         {botComment.text}
-                        <div className="absolute w-4 h-4 bg-gray-900/90 border-b border-r border-gray-700 transform rotate-45 -bottom-4 left-4"></div>
+                      </div>
+                      <div className="w-full bg-gray-900/90 rounded-full mt-1 h-1 overflow-hidden">
+                        <div
+                          className="bg-blue-500 h-1 transition-all"
+                          style={{ width: `${commentProgress}%` }}
+                        ></div>
                       </div>
                     </motion.div>
                   )}

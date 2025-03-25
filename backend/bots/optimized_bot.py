@@ -16,61 +16,71 @@ class OptimizedPokerBot:
                 "style": "aggressive",
                 "range": "wide",
                 "bluff_frequency": "high",
-                "adaptability": "moderate"
+                "adaptability": "moderate",
+                "bot_comment": "cocky and overconfident"
             },
             "tight": {
                 "style": "conservative",
                 "range": "narrow",
                 "bluff_frequency": "low",
-                "adaptability": "high"
+                "adaptability": "high",
+                "bot_comment": "cautious and analytical"
             },
             "balanced": {
                 "style": "adaptive",
                 "range": "moderate",
                 "bluff_frequency": "medium",
-                "adaptability": "high"
+                "adaptability": "high",
+                "bot_comment": "balanced and thoughtful"
             },
             "hyper_aggressive": {
                 "style": "reckless",
                 "range": "very wide",
                 "bluff_frequency": "very high",
-                "adaptability": "low"
+                "adaptability": "low",
+                "bot_comment": "taunting and intimidating"
             },
             "passive": {
                 "style": "cautious",
                 "range": "moderate",
                 "bluff_frequency": "very low",
-                "adaptability": "medium"
+                "adaptability": "medium",
+                "bot_comment": "apologetic and hesitant"
             },
             "trap_player": {
                 "style": "deceptive",
                 "range": "narrow",
                 "bluff_frequency": "low",
-                "adaptability": "moderate"
+                "adaptability": "moderate",
+                "bot_comment": "misleading and sly"
             },
             "math_based": {
                 "style": "calculative",
                 "range": "GTO optimal",
                 "bluff_frequency": "situational",
-                "adaptability": "high"
+                "adaptability": "high",
+                "bot_comment": "technical and statistical"
             },
             "exploitative": {
                 "style": "opportunistic",
                 "range": "dynamic",
                 "bluff_frequency": "adaptive",
-                "adaptability": "high"
+                "adaptability": "high",
+                "bot_comment": "observant and psychological"
             },
             "wildcard": {
                 "style": "unpredictable",
                 "range": "randomized",
                 "bluff_frequency": "random",
-                "adaptability": "low"
+                "adaptability": "low",
+                "bot_comment": "chaotic and nonsensical"
             },
             "maniac": {
                 "style": "fearless",
                 "range": "ultra-wide",
                 "bluff_frequency": "extreme",
-                "adaptability": "low"
+                "adaptability": "low",
+                "bot_comment": "wild and hyperactive"
             }
         }
 
@@ -303,7 +313,7 @@ class OptimizedPokerBot:
             "{\n"
             "  \"action\": \"check\"|\"call\"|\"fold\"|\"raise\"|\"bet\",\n"
             "  \"amount\": integer >= 0,\n"
-            "  \"table_comment\": \"<short text, DO NOT REVEAL YOUR HAND>\",\n"
+            f"  \"table_comment\": \"<DO NOT REVEAL YOUR HAND, short {self.traits[self.personality]['bot_comment']} text>\",\n"
             "}"
         )
 
