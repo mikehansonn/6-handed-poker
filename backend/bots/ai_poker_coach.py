@@ -234,6 +234,7 @@ class AIPokerCoach:
             "- Stack-to-pot ratio considerations\n"
             "- Blind stealing and defense\n"
             "- General bet sizing principles\n"
+            "- Keep your response concise, no bullet points."
         )
         
         # The user prompt includes the player's question and game context if available
@@ -252,7 +253,7 @@ class AIPokerCoach:
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": user_prompt}
                 ],
-                max_tokens=150
+                max_tokens=200
             )
             coaching_response = response.choices[0].message.content.strip()
             return coaching_response
