@@ -115,7 +115,7 @@ const CoachChat = () => {
   };
 
   return (
-    <div className={`bg-gray-800/80 backdrop-blur-sm text-white p-4 rounded-lg shadow-lg border-l-4 border-blue-500 transition-all duration-300 flex flex-col w-96 ${isExpanded ? 'h-96' : 'h-28'}`}>
+    <div className={`bg-gray-800/80 backdrop-blur-sm text-white p-4 rounded-lg shadow-lg border-l-4 border-blue-500 transition-all duration-300 flex flex-col w-96 ${isExpanded ? 'h-[600px]' : 'h-28'}`}>
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-lg font-bold flex items-center">
           <span className="mr-2 text-blue-400">❓</span>
