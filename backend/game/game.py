@@ -67,6 +67,7 @@ class TexasHoldem:
             # Clear old cards
             player.clear_pocket()
             player.clear_hand()
+            player.note_preflop()
 
             # If the player has at least 2 chips, they're active. Otherwise folded.
             if player.chips >= 2:

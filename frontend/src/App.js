@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import ChooseBotCount from './pages/ChooseBotCount';
 import ChooseBots from './pages/ChooseBots';
 import GameTable from './pages/GameTable';
+import Analytics from './pages/Analytics';
 import './App.css'; // Optional, for global styling
 import GameLost from './pages/GameLost';
 import GameWon from './pages/GameWon';
@@ -18,6 +19,7 @@ function App() {
         <Route path="/game-table" element={<GameTable />} />
         <Route path="/game-won" element={<GameWon />} />
         <Route path="/game-lost" element={<GameLost />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
     </Router>
   );

@@ -150,7 +150,7 @@ const GameTable = () => {
 
         if (data.status === "hand_complete") {
           console.log(data);
-          handleHandComplete(data.game_state, data.winner);
+          handleHandComplete(data.game_state, data.winner, data.player_diff);
           break;
         }
         if (!data.game_state.players[data.game_state.current_player_idx].is_bot) {
@@ -163,12 +163,20 @@ const GameTable = () => {
     }
   };
 
-  const handleHandComplete = (finalGameState, winner) => {
+  const handleHandComplete = (finalGameState, winner, player_diff) => {
     const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
     localStorage.setItem("total_hands_played", hands + 1);
+
+    const money = parseInt(localStorage.getItem("total_money_won")) || 0;
+    localStorage.setItem("total_money_won", money + player_diff);
+
     var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [0];
     session_hands[0] += 1
     localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
+
+    var session_money = JSON.parse(localStorage.getItem("session_money_won")) || [0];
+    session_money[0] += player_diff
+    localStorage.setItem("session_money_won", JSON.stringify(session_money));
 
     if (winner.name === "HumanUser") {
       const wins = parseInt(localStorage.getItem("total_hands_won")) || 0;
@@ -282,7 +290,7 @@ const GameTable = () => {
 
       if (data.status === "hand_complete") {
         console.log(data);
-        handleHandComplete(data.game_state, data.winner);
+        handleHandComplete(data.game_state, data.winner, data.player_diff);
       } else if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();
       }

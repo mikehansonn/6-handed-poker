@@ -6,9 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 export default function Home() {
   const navigate = useNavigate();
   const [isHovering, setIsHovering] = useState(false);
+  const [isAnalyticsHovering, setIsAnalyticsHovering] = useState(false);
 
   const handlePlayGame = () => {
     navigate('/choose-bot-count');
+  };
+
+  const handleViewAnalytics = () => {
+    navigate('/analytics');
   };
 
   // For the card icon animations in background
@@ -166,20 +171,21 @@ export default function Home() {
           </div>
         </motion.div>
         
-        {/* Play game button */}
+        {/* Buttons container */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
-          className="flex justify-center"
+          className="flex flex-col sm:flex-row justify-center gap-4"
         >
+          {/* Play game button */}
           <motion.button 
             onClick={handlePlayGame}
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
             whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.2)" }}
             whileTap={{ scale: 0.98 }}
-            className="relative px-10 py-4 text-xl font-bold rounded-xl shadow-xl overflow-hidden bg-gradient-to-r from-emerald-600 to-cyan-600 text-white w-full"
+            className="relative px-8 py-4 text-xl font-bold rounded-xl shadow-xl overflow-hidden bg-gradient-to-r from-emerald-600 to-cyan-600 text-white flex-1"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/40 to-cyan-600/40 opacity-50 animate-pulse"></div>
             <div className="relative flex items-center justify-center gap-2">
@@ -197,6 +203,36 @@ export default function Home() {
                   animate={{ scale: 1 }}
                   exit={{ scale: 0 }}
                   className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-cyan-400/10"
+                />
+              )}
+            </AnimatePresence>
+          </motion.button>
+
+          {/* Analytics button */}
+          <motion.button 
+            onClick={handleViewAnalytics}
+            onMouseEnter={() => setIsAnalyticsHovering(true)}
+            onMouseLeave={() => setIsAnalyticsHovering(false)}
+            whileHover={{ scale: 1.03, boxShadow: "0 10px 25px -5px rgba(59, 130, 246, 0.2)" }}
+            whileTap={{ scale: 0.98 }}
+            className="relative px-8 py-4 text-xl font-bold rounded-xl shadow-xl overflow-hidden bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex-1"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/40 to-indigo-600/40 opacity-50 animate-pulse"></div>
+            <div className="relative flex items-center justify-center gap-2">
+              <span>Analytics</span>
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
+              </svg>
+            </div>
+            
+            {/* Button hover effect */}
+            <AnimatePresence>
+              {isAnalyticsHovering && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0 }}
+                  className="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-indigo-400/10"
                 />
               )}
             </AnimatePresence>

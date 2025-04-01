@@ -7,6 +7,7 @@ class Player:
         self.pocket = []
         self.hand = []
         self.is_active = Status.ACTIVE
+        self.preflop = 0
         self.is_bot = is_bot
     
     def add_pocket_card(self, card):
@@ -20,3 +21,6 @@ class Player:
 
     def clear_hand(self):
         self.hand = []
+    
+    def note_preflop(self):
+        self.preflop = self.chips

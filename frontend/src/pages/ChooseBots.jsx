@@ -199,11 +199,22 @@ export default function ChooseBots() {
     setIsLoading(true);
     const playerNames = ['HumanUser'];
     const botIds = [null];
+    var selected_bots = JSON.parse(localStorage.getItem("bot_selection")) || {};
   
     selectedBots.forEach((botId) => {
+      if (botId in selected_bots) {
+        selected_bots[botId] += 1;
+      }
+      else {
+        selected_bots[botId] = 1;
+      }
       playerNames.push(botId);
       botIds.push(botId.toLowerCase());
     });
+    localStorage.setItem("bot_selection", JSON.stringify(selected_bots));
+    var game_sizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
+    game_sizes[playerNames.length - 2] += 1;
+    localStorage.setItem("game_sizes", JSON.stringify(game_sizes));
   
     try {
       const response = await api.post("/games/create", { 
@@ -215,14 +226,18 @@ export default function ChooseBots() {
       storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
       var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [];
       var session_wins = JSON.parse(localStorage.getItem("session_hands_won")) || [];
+      var session_money = JSON.parse(localStorage.getItem("session_money_won")) || [];
       if (session_hands.length >= 10) {
         session_hands.pop();
         session_wins.pop();
+        session_money.pop();
       }
       session_hands.unshift(0);
       session_wins.unshift(0);
+      session_money.unshift(0);
       localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
       localStorage.setItem("session_hands_won", JSON.stringify(session_wins));
+      localStorage.setItem("session_money_won", JSON.stringify(session_money));
       
       navigate('/game-table', { 
         state: { 

@@ -85,7 +85,8 @@ async def process_player_action(request: PlayerActionRequest):
             return {
                 "status": "hand_complete",
                 "game_state": game.get_game_state_json(),
-                "winner": winner
+                "winner": winner,
+                "player_diff": game.players[0].chips - game.players[0].preflop
             }
             
         # If betting round is complete, advance game stage
@@ -121,7 +122,8 @@ async def process_player_action(request: PlayerActionRequest):
                 return {
                     "status": "hand_complete",
                     "game_state": game.get_game_state_json(),
-                    "winner": big_winner
+                    "winner": big_winner,
+                    "player_diff": game.players[0].chips - game.players[0].preflop
                 }
                 
         return {
@@ -190,7 +192,8 @@ async def process_bot_action(request: StartHandRequest):
             return {
                 "status": "hand_complete",
                 "game_state": game.get_game_state_json(),
-                "winner": winner
+                "winner": winner,
+                "player_diff": game.players[0].chips - game.players[0].preflop
             }
 
         # If betting round is complete, advance game stage
@@ -226,7 +229,8 @@ async def process_bot_action(request: StartHandRequest):
                 return {
                     "status": "hand_complete",
                     "game_state": game.get_game_state_json(),
-                    "winner": big_winner
+                    "winner": big_winner,
+                    "player_diff": game.players[0].chips - game.players[0].preflop
                 }
                 
         return {
