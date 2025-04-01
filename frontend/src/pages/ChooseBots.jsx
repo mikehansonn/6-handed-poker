@@ -11,7 +11,6 @@ export default function ChooseBots() {
   const maxBots = Number(count);
   const cardSuits = ['♠', '♥', '♦', '♣'];
   
-  // Enhanced bot data with more detailed descriptions and characteristics
   const AVAILABLE_BOTS = [
     { 
       id: 'LooseLauren', 
@@ -103,7 +102,6 @@ export default function ChooseBots() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [isRandomSelecting, setIsRandomSelecting] = useState(false);
 
-  // Filter bots based on selected filters
   const filteredBots = AVAILABLE_BOTS.filter(bot => {
     if (filterDifficulty !== 'all' && bot.difficulty !== filterDifficulty) return false;
     if (filterStyle !== 'all' && bot.style !== filterStyle) return false;
@@ -116,32 +114,25 @@ export default function ChooseBots() {
     } else {
       if (selectedBots.length < maxBots) {
         setSelectedBots([...selectedBots, bot.id]);
-        // Show brief confetti effect when adding a bot
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 1000);
       }
     }
   };
 
-  // Function to randomly select opponents
   const handleRandomSelection = () => {
     if (isRandomSelecting || isLoading) return;
     
-    // Clear current selection first
     setSelectedBots([]);
     setIsRandomSelecting(true);
     
-    // Get all available bots (respecting current filters)
     const availableBots = [...filteredBots];
     const randomSelection = [];
     
-    // Shuffle the available bots to ensure randomness
     const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
     
-    // Determine how many bots to select (either max allowed or all available if fewer)
     const botsToSelect = Math.min(maxBots, shuffledBots.length);
     
-    // Create a random selection animation
     const selectNextBot = (index) => {
       if (index >= botsToSelect) {
         setIsRandomSelecting(false);
@@ -150,23 +141,18 @@ export default function ChooseBots() {
       
       const selectedBot = shuffledBots[index];
       
-      // Add to selection
       randomSelection.push(selectedBot.id);
       setSelectedBots([...randomSelection]);
       
-      // Show confetti effect
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 400);
-      
-      // Select next bot with delay
+
       setTimeout(() => selectNextBot(index + 1), 500);
     };
-    
-    // Start the random selection process
+
     selectNextBot(0);
   };
 
-  // Option to fill table with random bots
   const fillTableRandom = () => {
     if (isRandomSelecting || isLoading) return;
     
@@ -175,17 +161,12 @@ export default function ChooseBots() {
     
     setIsRandomSelecting(true);
     
-    // Get available bots that are not already selected
     const availableBots = filteredBots.filter(bot => !selectedBots.includes(bot.id));
-    
-    // Shuffle the available bots
     const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
     
-    // Determine how many more bots to select
     const botsToSelect = Math.min(remainingSlots, shuffledBots.length);
     const currentSelection = [...selectedBots];
     
-    // Create a random selection animation for remaining slots
     const selectNextBot = (index) => {
       if (index >= botsToSelect) {
         setIsRandomSelecting(false);
@@ -194,19 +175,15 @@ export default function ChooseBots() {
       
       const selectedBot = shuffledBots[index];
       
-      // Add to selection
       currentSelection.push(selectedBot.id);
       setSelectedBots([...currentSelection]);
       
-      // Show confetti effect
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 400);
       
-      // Select next bot with delay
       setTimeout(() => selectNextBot(index + 1), 500);
     };
     
-    // Start the random selection process
     selectNextBot(0);
   };
 
@@ -236,8 +213,16 @@ export default function ChooseBots() {
       
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
       storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
-      localStorage.setItem("session_hands_played", 0);
-      localStorage.setItem("session_hands_won", 0);
+      var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [];
+      var session_wins = JSON.parse(localStorage.getItem("session_hands_won")) || [];
+      if (session_hands.length >= 10) {
+        session_hands.pop();
+        session_wins.pop();
+      }
+      session_hands.unshift(0);
+      session_wins.unshift(0);
+      localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
+      localStorage.setItem("session_hands_won", JSON.stringify(session_wins));
       
       navigate('/game-table', { 
         state: { 
@@ -250,7 +235,6 @@ export default function ChooseBots() {
     }
   };
 
-  // Get difficulty badge styles
   const getDifficultyBadge = (difficulty) => {
     switch(difficulty) {
       case 'easy': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';

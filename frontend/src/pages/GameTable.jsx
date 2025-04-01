@@ -166,14 +166,16 @@ const GameTable = () => {
   const handleHandComplete = (finalGameState, winner) => {
     const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
     localStorage.setItem("total_hands_played", hands + 1);
-    const session_hands = parseInt(localStorage.getItem("session_hands_played")) || 0;
-    localStorage.setItem("session_hands_played", session_hands + 1);
+    var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [0];
+    session_hands[0] += 1
+    localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
 
     if (winner.name === "HumanUser") {
       const wins = parseInt(localStorage.getItem("total_hands_won")) || 0;
       localStorage.setItem("total_hands_won", wins + 1);
-      const session_wins = parseInt(localStorage.getItem("session_hands_won")) || 0;
-      localStorage.setItem("session_hands_won", session_wins + 1);
+      var session_wins = JSON.parse(localStorage.getItem("session_hands_won")) || [0];
+      session_wins[0] += 1
+      localStorage.setItem("session_hands_won", JSON.stringify(session_wins));
     }
 
     if (gameState.community_cards && gameState.community_cards.length === 0) {
