@@ -12,6 +12,7 @@ export default function ChooseBots() {
   const cardSuits = ['♠', '♥', '♦', '♣'];
   
   const AVAILABLE_BOTS = [
+    // This would be filled with players that fit the mold of what is used later
     { 
       id: 'LooseLauren', 
       style: 'loose', 
@@ -101,6 +102,9 @@ export default function ChooseBots() {
   const [filterStyle, setFilterStyle] = useState('all');
   const [showConfetti, setShowConfetti] = useState(false);
   const [isRandomSelecting, setIsRandomSelecting] = useState(false);
+  const [isMysteryMode, setIsMysteryMode] = useState(false);
+  const [showMysteryTooltip, setShowMysteryTooltip] = useState(false);
+  const [showMysteryEffect, setShowMysteryEffect] = useState(false);
 
   const filteredBots = AVAILABLE_BOTS.filter(bot => {
     if (filterDifficulty !== 'all' && bot.difficulty !== filterDifficulty) return false;
@@ -119,6 +123,7 @@ export default function ChooseBots() {
       }
     }
   };
+  
 
   const handleRandomSelection = () => {
     if (isRandomSelecting || isLoading) return;
@@ -194,14 +199,46 @@ export default function ChooseBots() {
     }
     localStorage.setItem(key, JSON.stringify(item));
   };
+
+  const handleMysteryMode = () => {
+    if (isRandomSelecting || isLoading) return;
+    
+    setShowMysteryEffect(true);
+    setIsLoading(true);
+    setSelectedBots([]);
+    setIsMysteryMode(true);
+    
+    // Trigger the mystery effect
+    const availableBots = [...filteredBots];
+    const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
+    
+    const mysterySelection = [];
+    const botsToSelect = Math.min(maxBots, shuffledBots.length);
+    
+    // Show some visual feedback
+    setShowConfetti(true);
+    setTimeout(() => {
+      setShowConfetti(false);
+      for (let i = 0; i < botsToSelect; i++) {
+        mysterySelection.push(shuffledBots[i].id);
+      }
   
-  const handleCreateGame = async () => {
+      // Proceed directly to game creation with mysterySelection
+      handleCreateGame(mysterySelection);
+    }, 1500);
+  };
+
+  const handleCreateGame = async (mysteryBots = null) => {
     setIsLoading(true);
     const playerNames = ['HumanUser'];
     const botIds = [null];
     var selected_bots = JSON.parse(localStorage.getItem("bot_selection")) || {};
-  
-    selectedBots.forEach((botId) => {
+    
+    // Use either the mystery bots or the user-selected bots
+    const botsToUse = Array.isArray(mysteryBots) ? mysteryBots : selectedBots;
+    const isMysteryModeActive = Array.isArray(mysteryBots); // Track whether mystery mode is active
+
+    botsToUse.forEach((botId) => {
       if (botId in selected_bots) {
         selected_bots[botId] += 1;
       }
@@ -211,11 +248,16 @@ export default function ChooseBots() {
       playerNames.push(botId);
       botIds.push(botId.toLowerCase());
     });
+    
+    // Store the mystery mode flag in local storage so it persists across page reloads
+    localStorage.setItem("is_mystery_mode", isMysteryModeActive);
+    
+    // Rest of function remains the same
     localStorage.setItem("bot_selection", JSON.stringify(selected_bots));
     var game_sizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     game_sizes[playerNames.length - 2] += 1;
     localStorage.setItem("game_sizes", JSON.stringify(game_sizes));
-
+  
     const a_sessions = parseInt(localStorage.getItem("total_sessions_played")) || 0;
     localStorage.setItem("total_sessions_played", a_sessions + 1);
   
@@ -244,12 +286,14 @@ export default function ChooseBots() {
       
       navigate('/game-table', { 
         state: { 
-          initialGameState: response.data.state 
+          initialGameState: response.data.state,
+          isMysteryMode: isMysteryModeActive  // Pass the mystery mode flag to GameTable
         } 
       });
     } catch (error) {
       console.error("Error creating game:", error);
       setIsLoading(false);
+      setIsMysteryMode(false);
     }
   };
 
@@ -405,7 +449,7 @@ export default function ChooseBots() {
           </div>
           
           {/* Random Selection Buttons */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap justify-center">
             <motion.button
               onClick={handleRandomSelection}
               disabled={isRandomSelecting || isLoading}
@@ -460,6 +504,53 @@ export default function ChooseBots() {
                 )}
               </motion.button>
             )}
+            
+            {/* Mystery Mode Button - NEW */}
+            <motion.button
+              onClick={handleMysteryMode}
+              disabled={isLoading}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onMouseEnter={() => setShowMysteryTooltip(true)}
+              onMouseLeave={() => setShowMysteryTooltip(false)}
+              className={`
+                relative px-4 py-1 text-sm rounded-lg flex items-center gap-2
+                ${isMysteryMode || isLoading ? 'bg-pink-700 text-white cursor-wait' : 'bg-pink-600 hover:bg-pink-500 text-white'}
+                transition-colors duration-200 border border-pink-500
+              `}
+            >
+              {isMysteryMode || isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Preparing Mystery...
+                </>
+              ) : (
+                <>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  Mystery Mode
+                </>
+              )}
+              
+              {/* Tooltip */}
+              <AnimatePresence>
+                {showMysteryTooltip && !isMysteryMode && !isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute bottom-full left-[-25%] transform -translate-x-[-25%] mb-2 w-64 bg-gray-900 text-white p-3 rounded-lg shadow-xl z-50 text-xs"
+                  >
+                    <div className="relative">
+                      <div className="font-semibold mb-1">Mystery Mode</div>
+                      <p>Face random opponents without knowing who they are!</p>
+                      <div className="absolute -bottom-6 left-[45%] transform -translate-x-[45%] w-3 h-3 bg-gray-900 rotate-45"></div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.button>
           </div>
         </motion.div>
         
@@ -572,86 +663,119 @@ export default function ChooseBots() {
           <div className="relative">
             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
               <span className="bg-gradient-to-r from-cyan-300 to-emerald-300 bg-clip-text text-transparent">
-                Selected Challengers
+                {isMysteryMode ? "Mystery Challengers" : "Selected Challengers"}
               </span>
-              <span className="text-sm bg-gray-700 px-2 py-0.5 rounded-full text-gray-300">
-                {selectedBots.length}/{maxBots}
-              </span>
+              {!isMysteryMode && (
+                <span className="text-sm bg-gray-700 px-2 py-0.5 rounded-full text-gray-300">
+                  {selectedBots.length}/{maxBots}
+                </span>
+              )}
             </h2>
             
-            {/* Progress bar */}
-            <div className="mb-4 w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2.5 rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${(selectedBots.length / maxBots) * 100}%` }}
-              ></div>
-            </div>
+            {/* Progress bar - Only show in normal mode */}
+            {!isMysteryMode && (
+              <div className="mb-4 w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
+                <div 
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 h-2.5 rounded-full transition-all duration-500 ease-out"
+                  style={{ width: `${(selectedBots.length / maxBots) * 100}%` }}
+                ></div>
+              </div>
+            )}
             
-            {/* Selected bot chips */}
+            {/* Selected bot chips or Mystery Message */}
             <div className="flex flex-wrap gap-2 justify-center mb-4">
-              {selectedBots.length > 0 ? (
-                selectedBots.map((botId) => {
-                  const bot = AVAILABLE_BOTS.find(b => b.id === botId);
-                  return (
-                    <motion.div 
-                      key={botId} 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className={`bg-gradient-to-r ${bot.color} rounded-full pl-3 pr-2 py-1.5 text-sm font-medium text-white flex items-center shadow-lg`}
-                    >
-                      <span className="mr-1">{bot.icon}</span>
-                      {botId}
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedBots(selectedBots.filter(b => b !== botId));
-                        }}
-                        className="ml-2 rounded-full bg-white/20 hover:bg-white/40 p-1 transition-colors"
-                        aria-label={`Remove ${botId}`}
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </motion.div>
-                  );
-                })
+              {isMysteryMode ? (
+                <motion.div 
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl p-4 w-full text-center"
+                >
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    <span className="font-bold">Mystery Mode Active</span>
+                  </div>
+                  <p className="text-sm text-white/90">
+                    Your opponents have been randomly selected and will remain hidden!
+                  </p>
+                </motion.div>
               ) : (
-                <div className="text-gray-400 italic py-4">No opponents selected yet</div>
+                selectedBots.length > 0 ? (
+                  selectedBots.map((botId) => {
+                    const bot = AVAILABLE_BOTS.find(b => b.id === botId);
+                    return (
+                      <motion.div 
+                        key={botId} 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className={`bg-gradient-to-r ${bot.color} rounded-full pl-3 pr-2 py-1.5 text-sm font-medium text-white flex items-center shadow-lg`}
+                      >
+                        <span className="mr-1">{bot.icon}</span>
+                        {botId}
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBots(selectedBots.filter(b => b !== botId));
+                          }}
+                          className="ml-2 rounded-full bg-white/20 hover:bg-white/40 p-1 transition-colors"
+                          aria-label={`Remove ${botId}`}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </motion.div>
+                    );
+                  })
+                ) : (
+                  <div className="text-gray-400 italic py-4">No opponents selected yet</div>
+                )
               )}
             </div>
             
-            {/* Stats display */}
-            {selectedBots.length > 0 && (
+            {/* Stats display - only show in normal mode or when mystery mode is active */}
+            {(selectedBots.length > 0 || isMysteryMode) && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-2 text-center"
               >
-                <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
-                  <div className="text-xs text-gray-400 mb-1">Difficulty Mix</div>
-                  <div className="flex justify-center gap-1">
-                    {['easy', 'medium', 'hard'].map(diff => {
-                      const count = selectedBots.filter(
-                        botId => AVAILABLE_BOTS.find(b => b.id === botId)?.difficulty === diff
-                      ).length;
-                      const color = diff === 'easy' ? 'bg-green-500' : 
-                                   diff === 'medium' ? 'bg-yellow-500' : 'bg-red-500';
-                      return count > 0 ? (
-                        <div key={diff} className="flex items-center">
-                          <div className={`w-3 h-3 ${color} rounded-full mr-1`}></div>
-                          <span className="text-xs text-gray-300">{count}</span>
-                        </div>
-                      ) : null;
-                    })}
+                {!isMysteryMode && (
+                  <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
+                    <div className="text-xs text-gray-400 mb-1">Difficulty Mix</div>
+                    <div className="flex justify-center gap-1">
+                      {['easy', 'medium', 'hard'].map(diff => {
+                        const count = selectedBots.filter(
+                          botId => AVAILABLE_BOTS.find(b => b.id === botId)?.difficulty === diff
+                        ).length;
+                        const color = diff === 'easy' ? 'bg-green-500' : 
+                                      diff === 'medium' ? 'bg-yellow-500' : 'bg-red-500';
+                        return count > 0 ? (
+                          <div key={diff} className="flex items-center">
+                            <div className={`w-3 h-3 ${color} rounded-full mr-1`}></div>
+                            <span className="text-xs text-gray-300">{count}</span>
+                          </div>
+                        ) : null;
+                      })}
+                    </div>
                   </div>
-                </div>
+                )}
+                
+                {isMysteryMode && (
+                  <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
+                    <div className="text-xs text-gray-400 mb-1">Difficulty Mix</div>
+                    <div className="text-sm text-white">
+                      <span className="text-pink-400">? ? ?</span>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="bg-gray-900/50 rounded-xl p-3 border border-gray-800">
                   <div className="text-xs text-gray-400 mb-1">Table Size</div>
                   <div className="text-sm text-white">
-                    {selectedBots.length + 1} Players
+                    {isMysteryMode ? `${maxBots + 1} Players` : `${selectedBots.length + 1} Players`}
                   </div>
                 </div>
                 
@@ -748,6 +872,64 @@ export default function ChooseBots() {
           )}
         </motion.div>
       </motion.div>
+
+      {showMysteryEffect && (
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/100 z-50 flex items-center justify-center"
+        >
+          <motion.div 
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.5 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              className="text-6xl mb-4 inline-block"
+            >
+              🎭
+            </motion.div>
+            
+            <motion.h2
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="text-3xl font-bold text-white mb-2"
+            >
+              Mystery Mode Activated!
+            </motion.h2>
+            
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="text-emerald-400 text-xl mb-8"
+            >
+              Preparing your mysterious opponents...
+            </motion.div>
+            
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+              }}
+              transition={{ 
+                duration: 1.5, 
+                repeat: Infinity,
+                repeatType: "loop" 
+              }}
+              className="relative"
+            >
+              <div className="w-16 h-16 rounded-full border-4 border-t-transparent border-emerald-500 animate-spin mx-auto"></div>
+            </motion.div>
+          </motion.div>
+        </motion.div>
+      )}
+
     </div>
   );
 }
