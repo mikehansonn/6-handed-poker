@@ -15,6 +15,7 @@ const CoachChat = ({ setIsLoading }) => {
     const hiddenState = localStorage.getItem("coach_chat_hidden");
     return hiddenState ? JSON.parse(hiddenState) : false;
   });
+  const [isThinking, setIsThinking] = useState(false); // New state for loading indicator
   
   const messagesEndRef = useRef(null);
 
@@ -37,7 +38,7 @@ const CoachChat = ({ setIsLoading }) => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages]);
+  }, [messages, isThinking]);
 
   // Add welcome message when component mounts
   useEffect(() => {
@@ -77,6 +78,7 @@ const CoachChat = ({ setIsLoading }) => {
     // Dispatch loading start event and set local loading state
     window.dispatchEvent(new Event('coachLoadingStart'));
     if (setIsLoading) setIsLoading(true);
+    setIsThinking(true); // Show the loading indicator
     
     setError(null);
     
@@ -86,6 +88,7 @@ const CoachChat = ({ setIsLoading }) => {
     if (!gameId) {
       setError("Game session not found");
       if (setIsLoading) setIsLoading(false);
+      setIsThinking(false); // Hide the loading indicator
       window.dispatchEvent(new Event('coachLoadingEnd'));
       return;
     }
@@ -116,6 +119,7 @@ const CoachChat = ({ setIsLoading }) => {
     } finally {
       // Dispatch loading end event and set local loading state
       if (setIsLoading) setIsLoading(false);
+      setIsThinking(false); // Hide the loading indicator
       window.dispatchEvent(new Event('coachLoadingEnd'));
     }
   };
@@ -188,16 +192,18 @@ const CoachChat = ({ setIsLoading }) => {
           </div>
         ))}
         
-        {/* Loading indicator */}
-        <div className="flex justify-start" style={{ display: 'none' }}>
-          <div className="bg-gray-700 text-white px-3 py-2 rounded-lg">
-            <div className="flex space-x-1">
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+        {/* Loading indicator - Now conditionally shown */}
+        {isThinking && (
+          <div className="flex justify-start">
+            <div className="bg-gray-700 text-white px-3 py-2 rounded-lg">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         <div ref={messagesEndRef} />
       </div>
@@ -214,7 +220,7 @@ const CoachChat = ({ setIsLoading }) => {
         <button
           type="submit"
           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={!inputValue.trim()}
+          disabled={!inputValue.trim() || isThinking}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
