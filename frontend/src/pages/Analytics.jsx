@@ -52,6 +52,7 @@ export default function Analytics() {
     const totalMoneyWon = parseInt(localStorage.getItem("total_money_won")) || 0;
     const gameSizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     const botSelection = JSON.parse(localStorage.getItem("bot_selection")) || {};
+    const totalSessionsPlayed = JSON.parse(localStorage.getItem("total_sessions_played")) || 0;
 
     setAnalyticsData({
       sessionHandsPlayed,
@@ -69,10 +70,7 @@ export default function Analytics() {
       setWinRate(((totalHandsWon / totalHandsPlayed) * 100).toFixed(1));
     }
 
-    const nonEmptySessions = sessionMoneyWon.filter(amount => amount !== 0).length;
-    if (nonEmptySessions > 0) {
-      setAvgMoneyPerSession((sessionMoneyWon.reduce((a, b) => a + b, 0) / nonEmptySessions).toFixed(2));
-    }
+    setAvgMoneyPerSession((totalMoneyWon / totalSessionsPlayed).toFixed(2));
 
     // Find favorite bot
     if (Object.keys(botSelection).length > 0) {

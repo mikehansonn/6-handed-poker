@@ -89,21 +89,117 @@ async def process_player_action(request: PlayerActionRequest):
                 "player_diff": game.players[0].chips - game.players[0].preflop
             }
             
-        # If betting round is complete, advance game stage
-        if betting_complete:
+        # Check if all remaining players are all-in
+        active_players = game.get_non_folded_players()
+        non_allin_players = [p for p in active_players if game.players.index(p) not in game.all_in_players]
+        all_players_all_in = len(non_allin_players) == 0
+            
+        # If betting round is complete or all players are all-in, advance game stage
+        if betting_complete or all_players_all_in:
+            # Determine how far to advance based on current stage
             if game.current_stage == GameStage.PREFLOP:
                 game.deal_flop()
                 game.reset_street_bets()
+                
+                # If all players are all-in, run out the rest of the board
+                if all_players_all_in:
+                    game.deal_turn()
+                    game.deal_river()
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.FLOP:
                 game.deal_turn() 
                 game.reset_street_bets()
+                
+                # If all players are all-in, run out the river
+                if all_players_all_in:
+                    game.deal_river()
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.TURN:
                 game.deal_river()
                 game.reset_street_bets()
+                
+                # If all players are all-in, go to showdown
+                if all_players_all_in:
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
                 game.current_stage = GameStage.SHOWDOWN
-                big_winner = 0
+                big_winner = None
                 max_win = 0
                 
                 for pot in game.pots:
@@ -196,21 +292,117 @@ async def process_bot_action(request: StartHandRequest):
                 "player_diff": game.players[0].chips - game.players[0].preflop
             }
 
-        # If betting round is complete, advance game stage
-        if betting_complete:
+        # Check if all remaining players are all-in
+        active_players = game.get_non_folded_players()
+        non_allin_players = [p for p in active_players if game.players.index(p) not in game.all_in_players]
+        all_players_all_in = len(non_allin_players) == 0
+            
+        # If betting round is complete or all players are all-in, advance game stage
+        if betting_complete or all_players_all_in:
+            # Determine how far to advance based on current stage
             if game.current_stage == GameStage.PREFLOP:
                 game.deal_flop()
                 game.reset_street_bets()
+                
+                # If all players are all-in, run out the rest of the board
+                if all_players_all_in:
+                    game.deal_turn()
+                    game.deal_river()
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.FLOP:
                 game.deal_turn()
                 game.reset_street_bets()
+                
+                # If all players are all-in, run out the river
+                if all_players_all_in:
+                    game.deal_river()
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.TURN:
                 game.deal_river()
                 game.reset_street_bets()
+                
+                # If all players are all-in, go to showdown
+                if all_players_all_in:
+                    game.current_stage = GameStage.SHOWDOWN
+                    
+                    # Calculate winners and distribute pots
+                    big_winner = None
+                    max_win = 0
+                    
+                    for pot in game.pots:
+                        eligible_players = [p if game.players.index(p) in pot.eligible_players else None 
+                                         for p in game.players]
+                        winner_shares, _ = HandEvaluator.determine_winners(eligible_players, game.community_cards)
+                        for player_idx, share in winner_shares.items():
+                            winner = game.players[player_idx]
+                            amount = int(pot.amount * share)
+                            if amount > max_win:
+                                big_winner = winner
+                                max_win = amount
+                            winner.chips += amount
+                        pot.amount = 0
+                        
+                    return {
+                        "status": "hand_complete",
+                        "game_state": game.get_game_state_json(),
+                        "winner": big_winner,
+                        "player_diff": game.players[0].chips - game.players[0].preflop
+                    }
+                    
             elif game.current_stage == GameStage.RIVER:
                 # Showdown required - evaluate hands and distribute pots
                 game.current_stage = GameStage.SHOWDOWN
-                big_winner = 0
+                big_winner = None
                 max_win = 0
                 
                 for pot in game.pots:
@@ -243,8 +435,6 @@ async def process_bot_action(request: StartHandRequest):
     except Exception as e:
         logger.error(f"Error processing bot action: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to process bot action")
-    
-
 
 # ========== NEW COACH RECOMMENDATION ENDPOINT ==========
 @router.post("/games/coach-recommendation")

@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from './api'; // same axios instance
 
-const CoachChat = () => {
+const CoachChat = ({ setIsLoading }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(() => {
     // Initialize from localStorage, default to false if not found
@@ -74,7 +73,11 @@ const CoachChat = () => {
     
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    setIsLoading(true);
+    
+    // Dispatch loading start event and set local loading state
+    window.dispatchEvent(new Event('coachLoadingStart'));
+    if (setIsLoading) setIsLoading(true);
+    
     setError(null);
     
     const localGameIdObj = JSON.parse(localStorage.getItem("game_id"));
@@ -82,7 +85,8 @@ const CoachChat = () => {
     
     if (!gameId) {
       setError("Game session not found");
-      setIsLoading(false);
+      if (setIsLoading) setIsLoading(false);
+      window.dispatchEvent(new Event('coachLoadingEnd'));
       return;
     }
     
@@ -110,7 +114,9 @@ const CoachChat = () => {
         text: "Sorry, I couldn't process your question right now."
       }]);
     } finally {
-      setIsLoading(false);
+      // Dispatch loading end event and set local loading state
+      if (setIsLoading) setIsLoading(false);
+      window.dispatchEvent(new Event('coachLoadingEnd'));
     }
   };
 
@@ -182,17 +188,16 @@ const CoachChat = () => {
           </div>
         ))}
         
-        {isLoading && (
-          <div className="flex justify-start">
-            <div className="bg-gray-700 text-white px-3 py-2 rounded-lg">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-              </div>
+        {/* Loading indicator */}
+        <div className="flex justify-start" style={{ display: 'none' }}>
+          <div className="bg-gray-700 text-white px-3 py-2 rounded-lg">
+            <div className="flex space-x-1">
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
             </div>
           </div>
-        )}
+        </div>
         
         <div ref={messagesEndRef} />
       </div>
@@ -205,12 +210,11 @@ const CoachChat = () => {
           onChange={handleInputChange}
           placeholder="Ask a question..."
           className="flex-1 bg-gray-700 text-white px-3 py-2 rounded-l-lg focus:outline-none focus:ring-1 focus:ring-blue-500"
-          disabled={isLoading}
         />
         <button
           type="submit"
           className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isLoading || !inputValue.trim()}
+          disabled={!inputValue.trim()}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

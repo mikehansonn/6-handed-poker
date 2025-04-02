@@ -5,6 +5,8 @@ import CoachChat from './CoachChat';
 const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handlePlayerAction }) => {
   const [sliderValue, setSliderValue] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [isCoachLoading, setIsCoachLoading] = useState(false);
+  const [isRecommendationLoading, setIsRecommendationLoading] = useState(false);
   
   // This effect needs to be at the top level, before any returns
   useEffect(() => {
@@ -23,6 +25,29 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
       }
     }
   }, [gameState, setBetAmount]);
+
+  // Event listeners for loading states
+  useEffect(() => {
+    // Setup event listeners for coach and recommendation loading states
+    const handleCoachLoadingStart = () => setIsCoachLoading(true);
+    const handleCoachLoadingEnd = () => setIsCoachLoading(false);
+    const handleRecommendationLoadingStart = () => setIsRecommendationLoading(true);
+    const handleRecommendationLoadingEnd = () => setIsRecommendationLoading(false);
+    
+    // Add event listeners
+    window.addEventListener('coachLoadingStart', handleCoachLoadingStart);
+    window.addEventListener('coachLoadingEnd', handleCoachLoadingEnd);
+    window.addEventListener('recommendationLoadingStart', handleRecommendationLoadingStart);
+    window.addEventListener('recommendationLoadingEnd', handleRecommendationLoadingEnd);
+    
+    // Clean up event listeners
+    return () => {
+      window.removeEventListener('coachLoadingStart', handleCoachLoadingStart);
+      window.removeEventListener('coachLoadingEnd', handleCoachLoadingEnd);
+      window.removeEventListener('recommendationLoadingStart', handleRecommendationLoadingStart);
+      window.removeEventListener('recommendationLoadingEnd', handleRecommendationLoadingEnd);
+    };
+  }, []);
   
   if (!gameState) return null;
 
@@ -48,6 +73,14 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
     raise: "bg-purple-500 hover:bg-purple-600 border-b-4 border-purple-700"
   };
 
+  const disabledButtonStyles = {
+    fold: "bg-red-400 border-b-4 border-red-500 opacity-50 cursor-not-allowed",
+    check: "bg-blue-400 border-b-4 border-blue-500 opacity-50 cursor-not-allowed",
+    call: "bg-green-400 space-x-1 border-b-4 border-green-500 opacity-50 cursor-not-allowed",
+    bet: "bg-yellow-400 border-b-4 border-yellow-500 opacity-50 cursor-not-allowed",
+    raise: "bg-purple-400 border-b-4 border-purple-500 opacity-50 cursor-not-allowed"
+  };
+
   const buttonDescriptions = {
     fold: "Give up your hand and forfeit any bets",
     check: "Pass the action to the next player without betting",
@@ -57,6 +90,9 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
   };
 
   const hasBettingAction = (availableActions.includes('bet') || availableActions.includes('raise'));
+  
+  // Check if any loading state is active
+  const isAnyLoading = isCoachLoading || isRecommendationLoading;
 
   const handleSliderChange = (e) => {
     const value = parseInt(e.target.value);
@@ -98,8 +134,9 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
               .map(action => (
                 <div key={action} className="relative group">
                   <button
-                    onClick={() => handleActionClick(action)}
-                    className={`${buttonStyles[action]} flex text-white px-4 py-2 rounded-lg font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg uppercase tracking-wide text-sm relative`}
+                    onClick={() => !isAnyLoading && handleActionClick(action)}
+                    className={`${isAnyLoading ? disabledButtonStyles[action] : buttonStyles[action]} flex text-white px-4 py-2 rounded-lg font-semibold transform ${!isAnyLoading && 'hover:scale-105'} transition-all duration-200 shadow-lg uppercase tracking-wide text-sm relative`}
+                    disabled={isAnyLoading}
                   >
                     <span>{action}</span>
                     {action === 'call' && currentPlayer.call_amount ? 
@@ -107,9 +144,13 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                         ${currentPlayer.call_amount}
                       </span> : null
                     }
+                    {isAnyLoading && (
+                      <div className="absolute inset-0 bg-black bg-opacity-20 rounded-lg flex items-center justify-center">
+                      </div>
+                    )}
                   </button>
                   <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap pointer-events-none">
-                    {buttonDescriptions[action]}
+                    {isAnyLoading ? "Wait for analysis to complete" : buttonDescriptions[action]}
                   </div>
                 </div>
               ))}
@@ -133,9 +174,10 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                   <span className="text-white font-medium text-sm pr-1">$</span>
                   <input
                     type="number"
-                    className="px-2 py-1 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-16 text-sm"
+                    className={`px-2 py-1 text-black rounded-lg border-2 border-gray-300 focus:border-blue-500 focus:outline-none w-16 text-sm ${isAnyLoading ? 'opacity-50 bg-gray-200' : ''}`}
                     value={betAmount}
                     onChange={(e) => {
+                      if (isAnyLoading) return;
                       const value = parseInt(e.target.value) || 0;
                       if (value >= minBet && value <= maxBet) {
                         setBetAmount(value);
@@ -144,6 +186,7 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                     }}
                     min={minBet}
                     max={maxBet}
+                    disabled={isAnyLoading}
                   />
                 </div>
                 
@@ -157,12 +200,13 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                     onChange={handleSliderChange}
                     onMouseEnter={() => setShowTooltip(true)}
                     onMouseLeave={() => setShowTooltip(false)}
-                    className="w-full h-2 bg-gray-600 rounded-lg appearance-none cursor-pointer"
+                    className={`w-full h-2 bg-gray-600 rounded-lg appearance-none ${isAnyLoading ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                     style={{
                       background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 ${((sliderValue - minBet) / (maxBet - minBet)) * 100}%, #4B5563 100%)`,
                     }}
+                    disabled={isAnyLoading}
                   />
-                  {showTooltip && (
+                  {showTooltip && !isAnyLoading && (
                     <div 
                       className="absolute -top-6 px-2 py-1 bg-gray-900 text-white text-xs rounded pointer-events-none"
                       style={{ 
@@ -177,13 +221,22 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                 {/* Confirm button */}
                 <button 
                   onClick={() => {
+                    if (isAnyLoading) return;
                     const action = availableActions.includes('bet') ? 'bet' : 'raise';
                     // Call handlePlayerAction directly with both action and amount
                     handlePlayerAction(action, parseInt(betAmount));
                   }}
-                  className={`${availableActions.includes('bet') ? buttonStyles.bet : buttonStyles.raise} text-white px-3 py-1 rounded-lg text-sm font-semibold transform hover:scale-105 transition-all duration-200 shadow-lg`}
+                  className={`${isAnyLoading ? 
+                    (availableActions.includes('bet') ? disabledButtonStyles.bet : disabledButtonStyles.raise) : 
+                    (availableActions.includes('bet') ? buttonStyles.bet : buttonStyles.raise)
+                  } text-white px-3 py-1 rounded-lg text-sm font-semibold transform ${!isAnyLoading && 'hover:scale-105'} transition-all duration-200 shadow-lg`}
+                  disabled={isAnyLoading}
                 >
                   {availableActions.includes('bet') ? 'Bet' : 'Raise'}
+                  {isAnyLoading && (
+                    <div className="absolute inset-0 bg-black bg-opacity-20 rounded-lg flex items-center justify-center">
+                    </div>
+                  )}
                 </button>
               </div>
               
@@ -193,10 +246,12 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
                   <button
                     key={index}
                     onClick={() => {
+                      if (isAnyLoading) return;
                       setBetAmount(preset.value);
                       setSliderValue(preset.value);
                     }}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-1 py-1 rounded text-xs transition-colors"
+                    className={`${isAnyLoading ? 'bg-gray-500 opacity-50 cursor-not-allowed' : 'bg-gray-700 hover:bg-gray-600'} text-white px-1 py-1 rounded text-xs transition-colors`}
+                    disabled={isAnyLoading}
                   >
                     {preset.label}
                   </button>
@@ -209,14 +264,14 @@ const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, 
         {/* Recommendation component to the left */}
         {hasHandStarted && (
           <div className="absolute right-full bottom-0 mr-3">
-            <Recommendation />
+            <Recommendation setIsLoading={setIsRecommendationLoading} />
           </div>
         )}
         
         {/* CoachChat component to the right */}
         {hasHandStarted && (
           <div className="absolute left-full bottom-0 ml-3">
-            <CoachChat />
+            <CoachChat setIsLoading={setIsCoachLoading} />
           </div>
         )}
         </div>

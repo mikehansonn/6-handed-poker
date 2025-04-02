@@ -416,13 +416,16 @@ class TexasHoldem:
         active_players = self.get_non_folded_players()
         non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
         
+        # If only one player remains, betting is complete
         if len(active_players) == 1:
             return True
         
-        if len(non_allin_players) <= 1 and self.current_bet == 0:
-            return True
-
+        # If no non-all-in players remain, betting is complete
         if len(non_allin_players) == 0:
+            return True
+        
+        # If only one non-all-in player remains and there's no current bet, betting is complete
+        if len(non_allin_players) == 1 and self.current_bet == 0:
             return True
 
         first_to_act = None
@@ -432,6 +435,10 @@ class TexasHoldem:
                 if self.players[idx].is_active == Status.ACTIVE and idx not in self.all_in_players:
                     first_to_act = idx
                 idx = (idx + 1) % len(self.players)
+                # If we've gone through all players and none are active and not all-in,
+                # then betting is complete
+                if idx == (self.button_position + 1) % len(self.players):
+                    return True
         else:
             first_to_act = (self.button_position + 3) % len(self.players) 
         
@@ -460,14 +467,24 @@ class TexasHoldem:
         self.current_bet = 0
         self.last_bettor_idx = None
         self.street_contributions = {i: 0 for i in range(len(self.players))}
-        #self.current_player_idx = (self.button_position + 1) % len(self.players)
-
+        
+        # Check if all remaining players are all-in
+        active_players = self.get_non_folded_players()
+        non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
+        
+        # If no non-all-in players remain or only one remains, no need to set the current player
+        if len(non_allin_players) <= 1:
+            return
+        
         # Start from the seat immediately after the button
         next_idx = (self.button_position + 1) % len(self.players)
 
-        # Skip over any players who have folded
-        while self.players[next_idx].is_active == Status.FOLDED:
+        # Skip over any players who have folded or are all-in
+        while self.players[next_idx].is_active == Status.FOLDED or next_idx in self.all_in_players:
             next_idx = (next_idx + 1) % len(self.players)
+            # If we've gone full circle and everyone is folded or all-in, break
+            if next_idx == (self.button_position + 1) % len(self.players):
+                break
 
         self.current_player_idx = next_idx
 
@@ -554,27 +571,58 @@ class TexasHoldem:
         print("\nPre-flop betting round:")
         self.play_betting_round()
         
+        # Check if hand should continue
+        active_players = self.get_non_folded_players()
+        if len(active_players) <= 1:
+            return self.handle_hand_end()
+        
+        # Handle all players all-in case
+        non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
+        all_players_all_in = len(non_allin_players) == 0
+        
+        # Flop
         self.deal_flop()
-        if len(self.get_active_players()) > 1:
-            # Flop
+        if not all_players_all_in and len(active_players) > 1:
             print("\nFlop betting round:")
             self.reset_street_bets()
             self.play_betting_round()
-            
+        
+        # Check if hand should continue
+        active_players = self.get_non_folded_players()
+        if len(active_players) <= 1:
+            return self.handle_hand_end()
+        
+        # Update all-in status after flop
+        non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
+        all_players_all_in = len(non_allin_players) == 0
+        
+        # Turn
         self.deal_turn()
-        if len(self.get_active_players()) > 1:
-            # Turn
+        if not all_players_all_in and len(active_players) > 1:
             print("\nTurn betting round:")
             self.reset_street_bets()
             self.play_betting_round()
         
+        # Check if hand should continue
+        active_players = self.get_non_folded_players()
+        if len(active_players) <= 1:
+            return self.handle_hand_end()
+        
+        # Update all-in status after turn
+        non_allin_players = [p for p in active_players if self.players.index(p) not in self.all_in_players]
+        all_players_all_in = len(non_allin_players) == 0
+        
+        # River
         self.deal_river()
-        if len(self.get_active_players()) > 1:
-            # River
+        if not all_players_all_in and len(active_players) > 1:
             print("\nRiver betting round:")
             self.reset_street_bets()
             self.play_betting_round()
-            
+        
+        # Hand resolution
+        return self.handle_hand_end()
+
+    def handle_hand_end(self):
         # Show results
         print(self.get_game_state_json())
         print("\nHand complete!")

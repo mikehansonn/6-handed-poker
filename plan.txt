@@ -1,38 +1,7 @@
-------
-TO FIX
-------
+- analytics
+: blind steals
+: vpip
+: pfr
 
-Pots still going to the wrong person sometimes
-Sometimes, a player will fold, and it will progress a card without giving everyone a chance to move
-Showdown is not flipping cards when the bot was the last to act on the river 
-
------
-STEPS:
------
-
-
-1. Update frontend for game setup pages 
-
-
-2. Add In table talk from bots
-    - I think I need to cause a whole delay on the game before I progress after the comment
-3. Add in AI coach
-
-------------
-RUNNING CODE
-------------
-
-- Run backend server: uvicorn main:app --reload which listen on http://127.0.0.1:8000
-
-- Run frontend with npm install, npm start which runs on  http://localhost:3000.
-
-
-
-
-
+- choose bots, randomize and send to table
 - 
--------------------------------------
-
-- The problem is start_hand is called after the AI_coach somehow, either we have to make sure it is called after
-  or define all of the necesary variables in the init function for TexasHoldem class 
-

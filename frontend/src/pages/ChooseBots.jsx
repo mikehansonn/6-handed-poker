@@ -215,6 +215,9 @@ export default function ChooseBots() {
     var game_sizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     game_sizes[playerNames.length - 2] += 1;
     localStorage.setItem("game_sizes", JSON.stringify(game_sizes));
+
+    const a_sessions = parseInt(localStorage.getItem("total_sessions_played")) || 0;
+    localStorage.setItem("total_sessions_played", a_sessions + 1);
   
     try {
       const response = await api.post("/games/create", { 

@@ -2,12 +2,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import api from './api'; // same axios instance
 
-const Recommendation = () => {
+const Recommendation = ({ setIsLoading }) => {
   const [advice, setAdvice] = useState('');
   const [action, setAction] = useState('');
   const [error, setError] = useState(null);
   const [hasFetched, setHasFetched] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [localIsLoading, setLocalIsLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(() => {
     // Initialize from localStorage, default to false if not found
     const hiddenState = localStorage.getItem("coach_hidden");
@@ -50,6 +50,13 @@ const Recommendation = () => {
     }
   };
 
+  // Update external loading state
+  useEffect(() => {
+    if (setIsLoading) {
+      setIsLoading(localIsLoading);
+    }
+  }, [localIsLoading, setIsLoading]);
+
   useEffect(() => {
     // Function to fetch advice
     const fetchAdvice = async () => {
@@ -78,7 +85,10 @@ const Recommendation = () => {
       // Update refs to prevent duplicate calls
       fetchingRef.current = true;
       lastGameStateRef.current = currentGameState;
-      setIsLoading(true);
+      
+      // Set local loading state and dispatch event
+      setLocalIsLoading(true);
+      window.dispatchEvent(new Event('recommendationLoadingStart'));
 
       try {
         const response = await api.post("/games/coach-recommendation", {
@@ -94,7 +104,9 @@ const Recommendation = () => {
         setError(err.message);
       } finally {
         setHasFetched(true);
-        setIsLoading(false);
+        // End loading state
+        setLocalIsLoading(false);
+        window.dispatchEvent(new Event('recommendationLoadingEnd'));
         fetchingRef.current = false;
       }
     };
@@ -136,7 +148,7 @@ const Recommendation = () => {
     );
   }
 
-  if (isLoading && !hasFetched) {
+  if (localIsLoading && !hasFetched) {
     return (
       <div className="bg-gray-800/80 backdrop-blur-sm text-white p-4 rounded-lg ml-4 shadow-lg border-l-4 border-blue-500 animate-pulse w-96">
         <div className="flex items-center justify-between">
