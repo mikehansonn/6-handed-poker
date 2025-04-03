@@ -217,7 +217,6 @@ const GameTable = () => {
     const nonFoldedPlayers = finalGameState.players.filter(p => p.status !== 'folded');
     
     const humanPlayer1 = finalGameState.players.find(p => !p.is_bot);
-    const humanPlayerIndex = finalGameState.players.findIndex(p => !p.is_bot);
     
     let winningPlayer;
     
@@ -705,36 +704,149 @@ const GameTable = () => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center"
           >
-            <motion.button
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.2)" }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleStartGame}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
-              className="relative px-10 py-4 text-xl font-bold rounded-xl shadow-xl overflow-hidden bg-gradient-to-r from-emerald-600 to-cyan-600 text-white"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/40 to-cyan-600/40 opacity-50 animate-pulse"></div>
-              <div className="relative flex items-center justify-center gap-2">
-                <span>Deal Cards</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
-                </svg>
-              </div>
+            <div className="max-w-3xl w-full px-4">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="mb-8 text-center"
+              >
+                <motion.h1 
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-4xl sm:text-5xl font-bold mb-3 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent"
+                >
+                  Ready to Play
+                </motion.h1>
+                
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-lg text-gray-300"
+                >
+                  Your opponents are waiting at the table
+                </motion.p>
+              </motion.div>
               
-              {/* Button hover effect */}
-              <AnimatePresence>
-                {isHovering && (
+              {/* Player cards preview animation */}
+              <motion.div
+                className="flex justify-center mb-2"
+              >
+                <div className="relative h-40 w-72">
+                  {[...Array(5)].map((_, i) => (
+                    <motion.div
+                      key={`card-${i}`}
+                      initial={{ 
+                        x: 0, 
+                        y: -100, 
+                        rotate: 0,
+                        opacity: 0 
+                      }}
+                      animate={{ 
+                        x: i * 20 - 40, 
+                        y: 0,
+                        rotate: (i - 2) * 5,
+                        opacity: 1 
+                      }}
+                      transition={{ 
+                        delay: 0.5 + i * 0.1,
+                        type: "spring",
+                        stiffness: 300,
+                        damping: 15
+                      }}
+                      className="absolute top-0 left-[35%] w-24 h-36 bg-gradient-to-br from-white to-gray-200 rounded-lg shadow-xl border border-gray-300 flex items-center justify-center"
+                    >
+                      <motion.div 
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 1 + i * 0.1 }}
+                        className="text-2xl"
+                      >
+                        {['♠️', '♥️', '♦️', '♣️', '🃏'][i]}
+                      </motion.div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+              
+              {/* Opponent previews */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8"
+              >
+                {gameState.players.filter(player => player.is_bot).map((player, index) => (
                   <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    exit={{ scale: 0 }}
-                    className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-cyan-400/10"
-                  />
-                )}
-              </AnimatePresence>
-            </motion.button>
+                    key={player.name}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.7 + index * 0.1 }}
+                    className="bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 rounded-xl p-3 text-center"
+                  >
+                    <div className="font-bold text-white mb-1">
+                      {!player.is_bot || !hidePlayerNames ? player.name : (
+                        <span className="text-pink-400">Mystery Player {index + 1}</span>
+                      )}
+                    </div>
+                    <div className="text-emerald-500 font-semibold">${player.chips}</div>
+                  </motion.div>
+                ))}
+              </motion.div>
+              
+              {/* Action button */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 1.2 }}
+                className="flex justify-center"
+              >
+                <motion.button
+                  initial={{ scale: 0.9 }}
+                  animate={{ scale: 1 }}
+                  whileHover={{ scale: 1.05, boxShadow: "0 10px 25px -5px rgba(16, 185, 129, 0.3)" }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleStartGame}
+                  onMouseEnter={() => setIsHovering(true)}
+                  onMouseLeave={() => setIsHovering(false)}
+                  className="relative px-10 py-4 text-xl font-bold rounded-xl shadow-xl overflow-hidden bg-gradient-to-r from-emerald-600 to-cyan-600 text-white"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/40 to-cyan-600/40 opacity-50 animate-pulse"></div>
+                  <div className="relative flex items-center justify-center gap-2">
+                    <span>Deal Cards</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  
+                  {/* Button hover effect */}
+                  <AnimatePresence>
+                    {isHovering && (
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        exit={{ scale: 0 }}
+                        className="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-cyan-400/10"
+                      />
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+              </motion.div>
+              
+              {/* Optional tip */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 1.5 }}
+                className="text-center mt-6 text-gray-400 text-sm"
+              >
+                <span className={`${isMysteryMode ? "" : "hidden"} bg-gray-800 px-3 py-1.5 rounded-full`}>
+                  Mystery Mode: Opponent identities are hidden!
+                </span>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
