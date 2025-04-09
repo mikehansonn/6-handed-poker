@@ -4,9 +4,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from './api';
 import ActionButtons from './ActionButtons';
 import PlayingCard from './PlayingCard';
+import SoundManager from './SoundManager';
 
 const GameTable = () => {
   const navigate = useNavigate();
+  const { 
+    playFoldSound,
+    playBetSound, 
+    playCheckSound,
+    playWinSound,
+    playDealSound
+  } = SoundManager();
   const [botComment, setBotComment] = useState({});
   const [commentProgress, setCommentProgress] = useState(100);
   const [gameState, setGameState] = useState(() => {
@@ -158,12 +166,20 @@ const GameTable = () => {
         }
         
         updateGameState(data.game_state);
+        if (data.action === 'call' || data.action === 'bet' || data.action === 'raise') {
+          playBetSound();
+        }
+        else if (data.action === 'check') {
+          playCheckSound();
+        }
+        else if (data.action === 'fold') {
+          playFoldSound();
+        }
 
         await new Promise(resolve => setTimeout(resolve, 2000));
         setBotComment(null);
 
         if (data.status === "hand_complete") {
-          console.log(data);
           handleHandComplete(data.game_state, data.winner, data.player_diff);
           break;
         }
@@ -244,6 +260,10 @@ const GameTable = () => {
     
     // Wait 3 seconds before showing the winner
     setTimeout(() => {
+      playWinSound();
+    }, 2500);
+
+    setTimeout(() => {
       setWinner(winningPlayer);
     }, 3000);
     
@@ -257,6 +277,7 @@ const GameTable = () => {
       const response = await api.post("/games/start-hand", {game_id: gameId});
       const data = await response.data;
       updateGameState(data.game_state);
+      playDealSound();
       setCheckStarted(true);
 
       if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
@@ -276,19 +297,9 @@ const GameTable = () => {
     }
   };
 
-  const handleBetSubmit = () => {
-    if (!betAmount || isNaN(betAmount) || parseInt(betAmount) <= 0) {
-      setError('Please enter a valid bet amount');
-      return;
-    }
-    handlePlayerAction(selectedAction, parseInt(betAmount));
-    setBetAmount('');
-    setShowBetInput(false);
-    setSelectedAction(null);
-  };
-
   const handlePlayerAction = async (action, amount = null) => {
     try {
+      console.log(action);
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/player-action", {
         game_id: gameId,
@@ -297,12 +308,20 @@ const GameTable = () => {
       });
       const data = await response.data;
       updateGameState(data.game_state);
+      if (action === 'call' || action === 'bet' || action === 'raise') {
+        playBetSound();
+      }
+      else if (action === 'check') {
+        playCheckSound();
+      }
+      else if (action === 'fold') {
+        playFoldSound();
+      }
 
       // Reset comment since humans don't make comments
       setBotComment(null);
 
       if (data.status === "hand_complete") {
-        console.log(data);
         handleHandComplete(data.game_state, data.winner, data.player_diff);
       } else if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();

@@ -287,7 +287,8 @@ async def process_bot_action(request: StartHandRequest):
                 "status": "hand_complete",
                 "game_state": game.get_game_state_json(),
                 "winner": winner,
-                "player_diff": game.players[0].chips - game.players[0].preflop
+                "player_diff": game.players[0].chips - game.players[0].preflop,
+                "action": action
             }
 
         # Check if all remaining players are all-in
@@ -329,7 +330,8 @@ async def process_bot_action(request: StartHandRequest):
                         "status": "hand_complete",
                         "game_state": game.get_game_state_json(),
                         "winner": big_winner,
-                        "player_diff": game.players[0].chips - game.players[0].preflop
+                        "player_diff": game.players[0].chips - game.players[0].preflop,
+                        "action": action
                     }
                     
             elif game.current_stage == GameStage.FLOP:
@@ -362,7 +364,8 @@ async def process_bot_action(request: StartHandRequest):
                         "status": "hand_complete",
                         "game_state": game.get_game_state_json(),
                         "winner": big_winner,
-                        "player_diff": game.players[0].chips - game.players[0].preflop
+                        "player_diff": game.players[0].chips - game.players[0].preflop,
+                        "action": action
                     }
                     
             elif game.current_stage == GameStage.TURN:
@@ -394,7 +397,8 @@ async def process_bot_action(request: StartHandRequest):
                         "status": "hand_complete",
                         "game_state": game.get_game_state_json(),
                         "winner": big_winner,
-                        "player_diff": game.players[0].chips - game.players[0].preflop
+                        "player_diff": game.players[0].chips - game.players[0].preflop,
+                        "action": action
                     }
                     
             elif game.current_stage == GameStage.RIVER:
@@ -420,14 +424,16 @@ async def process_bot_action(request: StartHandRequest):
                     "status": "hand_complete",
                     "game_state": game.get_game_state_json(),
                     "winner": big_winner,
-                    "player_diff": game.players[0].chips - game.players[0].preflop
+                    "player_diff": game.players[0].chips - game.players[0].preflop,
+                    "action": action
                 }
                 
         return {
             "status": "success",
             "game_state": game.get_game_state_json(),
             "table_comment": table_comment,
-            "comment_index": current_player_idx
+            "comment_index": current_player_idx,
+            "action": action
         }
         
     except Exception as e:

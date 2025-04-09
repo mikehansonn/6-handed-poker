@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Recommendation from './Recommendation';
 import CoachChat from './CoachChat';
+import SoundManager from './SoundManager';
 
 const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handlePlayerAction }) => {
   const [sliderValue, setSliderValue] = useState(0);
