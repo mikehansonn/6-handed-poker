@@ -241,8 +241,6 @@ async def process_bot_action(request: StartHandRequest):
         raise HTTPException(status_code=404, detail="Game not found")
         
     game = active_games[game_id]
-
-    time.sleep(1) 
     
     try:
         # Verify current player is a bot

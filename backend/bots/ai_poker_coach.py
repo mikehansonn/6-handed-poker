@@ -253,7 +253,7 @@ class AIPokerCoach:
                     {"role": "system", "content": system_msg},
                     {"role": "user", "content": user_prompt}
                 ],
-                max_tokens=200
+                max_tokens=150
             )
             coaching_response = response.choices[0].message.content.strip()
             return coaching_response
