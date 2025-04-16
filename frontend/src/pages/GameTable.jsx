@@ -482,7 +482,7 @@ const GameTable = () => {
 
   const playerPositions = players.map((player, index) => {
     const totalPositions = numPlayers;
-    const angle = -Math.PI/2 + ((index) / totalPositions) * 2 * Math.PI;
+    const angle = -Math.PI/2 + ((index) / totalPositions) * 2 * Math.PI + Math.PI;
     
     const ellipseA = tableWidth * 0.53;
     const ellipseB = tableHeight * 0.53; 
@@ -542,7 +542,6 @@ const GameTable = () => {
           </button>
         </motion.div>
       )}
-      {/* Game Table */}
       <div className="flex justify-center items-center mt-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -611,7 +610,6 @@ const GameTable = () => {
               </motion.div>
             )}
 
-            {/* Pot and current bet display */}
             <motion.div 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -619,7 +617,6 @@ const GameTable = () => {
               className="absolute top-[35%] flex flex-col items-center"
             >
               <div className="flex items-center gap-4">
-                {/* Pot amount text display */}
                 <div className="bg-black/50 backdrop-blur-sm rounded-xl p-2 shadow-xl border border-slate-700">
                   <div className="flex items-center gap-2">
                     <div className="text-white text-2xl font-bold text-center">
@@ -632,10 +629,8 @@ const GameTable = () => {
               </div>
             </motion.div>
 
-            {/* Player positions */}
             {playerPositions.map(({ x, y, betX, betY, player, isButton }, index) => (
               <div key={index}>
-                {/* Bot comment bubble */}
                 <AnimatePresence>
                   {botComment && botComment.playerName === player.name && (
                     <motion.div
@@ -644,8 +639,8 @@ const GameTable = () => {
                       exit={{ opacity: 0, y: -10, scale: 0.9 }}
                       className="absolute w-48 z-50 px-4 py-2 bg-gray-900/90 text-white text-sm rounded-xl shadow-md border border-gray-700"
                       style={{
-                        left: x + 70,
-                        top: y - 60,
+                        left: x + 90,
+                        top: y - 1,
                       }}
                     >
                       <div className="relative">
@@ -661,7 +656,6 @@ const GameTable = () => {
                   )}
                 </AnimatePresence>
 
-                {/* Bet amount indicator */}
                 <AnimatePresence>
                   {player.current_street_contribution > 0 && (
                     <motion.div 
@@ -676,12 +670,9 @@ const GameTable = () => {
                       }}
                     >
                       <div className="relative flex flex-col items-center">
-                        {/* Chip stack visualization based on bet amount */}
                         <div className="relative flex flex-col items-center">
-                          {/* Render different chip stacks based on bet amount */}
                           {renderChipStack(player.current_street_contribution)}
-                          
-                          {/* Bet amount label */}
+
                           <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-bold whitespace-nowrap">
                             ${player.current_street_contribution}
                           </div>
@@ -691,7 +682,6 @@ const GameTable = () => {
                   )}
                 </AnimatePresence>
 
-                {/* Player card */}
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -720,7 +710,6 @@ const GameTable = () => {
                     </div>
                       <div className="text-emerald-500 font-semibold text-lg">${player.chips}</div>
                       
-                      {/* Player cards */}
                       {player.pocket_cards && player.pocket_cards.length > 0 && (
                         <div className="flex justify-center gap-1 mt-2">
                           {player.pocket_cards.map((card, i) => (
@@ -733,7 +722,6 @@ const GameTable = () => {
                     </div>
                   </motion.div>
                   
-                  {/* Dealer button */}
                   {isButton && (
                     <motion.div 
                       initial={{ scale: 0 }}
@@ -751,7 +739,6 @@ const GameTable = () => {
         </motion.div>
       </div>
       
-      {/* Action buttons */}
       <div className="mt-6 w-[800px]">
         <ActionButtons 
           gameState={gameState} 
@@ -762,7 +749,6 @@ const GameTable = () => {
         />
       </div>
       
-      {/* Start game button overlay */}
       <AnimatePresence>
         {!checkStarted && (
           <motion.div 
@@ -797,7 +783,6 @@ const GameTable = () => {
                 </motion.p>
               </motion.div>
               
-              {/* Player cards preview animation */}
               <motion.div
                 className="flex justify-center mb-2"
               >
@@ -838,7 +823,6 @@ const GameTable = () => {
                 </div>
               </motion.div>
               
-              {/* Opponent previews */}
               <motion.div 
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -863,7 +847,6 @@ const GameTable = () => {
                 ))}
               </motion.div>
               
-              {/* Action button */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -888,7 +871,6 @@ const GameTable = () => {
                     </svg>
                   </div>
                   
-                  {/* Button hover effect */}
                   <AnimatePresence>
                     {isHovering && (
                       <motion.div
@@ -902,7 +884,6 @@ const GameTable = () => {
                 </motion.button>
               </motion.div>
               
-              {/* Optional tip */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
