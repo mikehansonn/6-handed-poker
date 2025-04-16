@@ -673,7 +673,7 @@ const GameTable = () => {
                         <div className="relative flex flex-col items-center">
                           {renderChipStack(player.current_street_contribution)}
 
-                          <div className="absolute -right-6 top-1/2 transform -translate-y-1/2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-bold whitespace-nowrap">
+                          <div className="absolute -right-8 top-1/2 transform -translate-y-1/2 bg-black/80 text-white px-2 py-1 rounded-md text-sm font-bold whitespace-nowrap">
                             ${player.current_street_contribution}
                           </div>
                         </div>
