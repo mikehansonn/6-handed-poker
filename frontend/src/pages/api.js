@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Define the base URL based on environment
 const getBaseUrl = () => {
   // Check if running locally by looking at the window location
   const isLocal = window.location.hostname === 'localhost' || 

@@ -3,16 +3,13 @@
 import { useEffect, useRef } from 'react';
 
 const SoundManager = () => {
-  // Create refs to hold the audio elements
   const foldSound = useRef(null);
   const betSound = useRef(null);
   const checkSound = useRef(null);
   const winSound = useRef(null);
   const dealSound = useRef(null);
   
-  // Initialize the audio elements on component mount
   useEffect(() => {
-    // Create the audio elements
     foldSound.current = new Audio('/sounds/fold.wav');
     betSound.current = new Audio('/sounds/chips.wav');
     checkSound.current = new Audio('/sounds/check.wav');

@@ -1,4 +1,3 @@
-// src/pages/ChooseBots.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,7 +11,6 @@ export default function ChooseBots() {
   const cardSuits = ['♠', '♥', '♦', '♣'];
   
   const AVAILABLE_BOTS = [
-    // This would be filled with players that fit the mold of what is used later
     { 
       id: 'LooseLauren', 
       style: 'loose', 
@@ -207,23 +205,20 @@ export default function ChooseBots() {
     setIsLoading(true);
     setSelectedBots([]);
     setIsMysteryMode(true);
-    
-    // Trigger the mystery effect
+
     const availableBots = [...filteredBots];
     const shuffledBots = [...availableBots].sort(() => Math.random() - 0.5);
     
     const mysterySelection = [];
     const botsToSelect = Math.min(maxBots, shuffledBots.length);
-    
-    // Show some visual feedback
+
     setShowConfetti(true);
     setTimeout(() => {
       setShowConfetti(false);
       for (let i = 0; i < botsToSelect; i++) {
         mysterySelection.push(shuffledBots[i].id);
       }
-  
-      // Proceed directly to game creation with mysterySelection
+
       handleCreateGame(mysterySelection);
     }, 1500);
   };
@@ -233,10 +228,9 @@ export default function ChooseBots() {
     const playerNames = ['HumanUser'];
     const botIds = [null];
     var selected_bots = JSON.parse(localStorage.getItem("bot_selection")) || {};
-    
-    // Use either the mystery bots or the user-selected bots
+
     const botsToUse = Array.isArray(mysteryBots) ? mysteryBots : selectedBots;
-    const isMysteryModeActive = Array.isArray(mysteryBots); // Track whether mystery mode is active
+    const isMysteryModeActive = Array.isArray(mysteryBots); 
 
     botsToUse.forEach((botId) => {
       if (botId in selected_bots) {
@@ -248,11 +242,9 @@ export default function ChooseBots() {
       playerNames.push(botId);
       botIds.push(botId.toLowerCase());
     });
-    
-    // Store the mystery mode flag in local storage so it persists across page reloads
+
     localStorage.setItem("is_mystery_mode", isMysteryModeActive);
-    
-    // Rest of function remains the same
+
     localStorage.setItem("bot_selection", JSON.stringify(selected_bots));
     var game_sizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     game_sizes[playerNames.length - 2] += 1;
@@ -287,7 +279,7 @@ export default function ChooseBots() {
       navigate('/game-table', { 
         state: { 
           initialGameState: response.data.state,
-          isMysteryMode: isMysteryModeActive  // Pass the mystery mode flag to GameTable
+          isMysteryMode: isMysteryModeActive 
         } 
       });
     } catch (error) {
@@ -317,11 +309,9 @@ export default function ChooseBots() {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white p-4 sm:p-6 overflow-hidden">
-      {/* Animated background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute -inset-[10%] bg-gradient-radial from-emerald-500/10 via-transparent to-transparent blur-3xl"></div>
-        
-        {/* Animated playing card symbols - FIXED with improved visibility */}
+
         <div className="overflow-hidden h-full w-full absolute z-0">
           {cardSuits.flatMap((suit, suitIndex) => 
             [...Array(5)].map((_, i) => (
@@ -361,7 +351,6 @@ export default function ChooseBots() {
         transition={{ duration: 0.5 }}
         className="relative z-10 max-w-5xl w-full bg-gray-900/90 backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-800 overflow-hidden"
       >
-        {/* Header */}
         <div className="text-center relative mb-8">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -395,7 +384,6 @@ export default function ChooseBots() {
           </motion.p>
         </div>
         
-        {/* Filter controls */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -448,7 +436,6 @@ export default function ChooseBots() {
             </select>
           </div>
           
-          {/* Random Selection Buttons */}
           <div className="flex items-center gap-2 flex-wrap justify-center">
             <motion.button
               onClick={handleRandomSelection}
@@ -505,7 +492,6 @@ export default function ChooseBots() {
               </motion.button>
             )}
             
-            {/* Mystery Mode Button - NEW */}
             <motion.button
               onClick={handleMysteryMode}
               disabled={isLoading}
@@ -533,7 +519,6 @@ export default function ChooseBots() {
                 </>
               )}
               
-              {/* Tooltip */}
               <AnimatePresence>
                 {showMysteryTooltip && !isMysteryMode && !isLoading && (
                   <motion.div
@@ -554,7 +539,6 @@ export default function ChooseBots() {
           </div>
         </motion.div>
         
-        {/* Bot selection grid */}
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -586,7 +570,6 @@ export default function ChooseBots() {
                       : 'bg-gray-800/80 border border-gray-700/50 hover:border-gray-600'}
                   `}
                 >
-                  {/* Card content */}
                   <div className="p-4 h-full flex flex-col items-center justify-between min-h-32">
                     <div className="absolute top-0 right-0 left-0 h-1/2 bg-gradient-to-b from-white/10 to-transparent opacity-50"></div>
                     
@@ -606,8 +589,7 @@ export default function ChooseBots() {
                       </div>
                     </div>
                   </div>
-                  
-                  {/* Selection checkmark */}
+
                   {isSelected && (
                     <motion.div 
                       initial={{ opacity: 0, scale: 0 }}
@@ -619,8 +601,7 @@ export default function ChooseBots() {
                       </svg>
                     </motion.div>
                   )}
-                  
-                  {/* Bot style tooltip on hover */}
+
                   <AnimatePresence>
                     {isHovered && (
                       <motion.div
@@ -650,8 +631,7 @@ export default function ChooseBots() {
             })}
           </AnimatePresence>
         </motion.div>
-        
-        {/* Selected opponents panel */}
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -671,8 +651,7 @@ export default function ChooseBots() {
                 </span>
               )}
             </h2>
-            
-            {/* Progress bar - Only show in normal mode */}
+
             {!isMysteryMode && (
               <div className="mb-4 w-full bg-gray-700 rounded-full h-2.5 overflow-hidden">
                 <div 
@@ -681,8 +660,7 @@ export default function ChooseBots() {
                 ></div>
               </div>
             )}
-            
-            {/* Selected bot chips or Mystery Message */}
+
             <div className="flex flex-wrap gap-2 justify-center mb-4">
               {isMysteryMode ? (
                 <motion.div 
@@ -734,8 +712,7 @@ export default function ChooseBots() {
                 )
               )}
             </div>
-            
-            {/* Stats display - only show in normal mode or when mystery mode is active */}
+
             {(selectedBots.length > 0 || isMysteryMode) && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
@@ -789,8 +766,7 @@ export default function ChooseBots() {
             )}
           </div>
         </motion.div>
-        
-        {/* Start game button */}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -835,8 +811,7 @@ export default function ChooseBots() {
               </>
             )}
           </motion.button>
-          
-          {/* Confetti effect when adding bot */}
+
           {showConfetti && (
             <motion.div 
               initial={{ opacity: 1 }}

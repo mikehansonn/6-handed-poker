@@ -1,4 +1,3 @@
-// src/pages/ChooseBotCount.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,33 +8,27 @@ export default function ChooseBotCount() {
   const [isHovering, setIsHovering] = useState(false);
 
   const handleContinue = () => {
-    // Pass the selected count via query parameter
     navigate(`/choose-bots?count=${botCount}`);
   };
 
   const handleInputChange = (e) => {
     const value = Number(e.target.value);
-    // Keep value between 1-5
     if (value < 1) setBotCount(1);
     else if (value > 5) setBotCount(5);
     else setBotCount(value);
   };
-  
-  // New function to handle clicking on bot count visualizer items
+
   const handleBotCountSelection = (count) => {
     setBotCount(count);
   };
 
-  // For the card icon animations in background
   const cardSuits = ['♠', '♥', '♦', '♣'];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white p-4 sm:p-6 overflow-hidden">
-      {/* Animated background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute -inset-[10%] bg-gradient-radial from-emerald-500/10 via-transparent to-transparent blur-3xl"></div>
-        
-        {/* Animated playing card symbols - FIXED with improved visibility */}
+
         <div className="overflow-hidden h-full w-full absolute z-0">
           {cardSuits.flatMap((suit, suitIndex) => 
             [...Array(5)].map((_, i) => (
@@ -75,7 +68,6 @@ export default function ChooseBotCount() {
         transition={{ duration: 0.5 }}
         className="relative z-10 max-w-xl w-full bg-gray-900/90 backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-800 overflow-hidden"
       >
-        {/* Glowing backgrounds */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -88,8 +80,7 @@ export default function ChooseBotCount() {
           transition={{ delay: 0.2, duration: 0.5 }}
           className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"
         />
-        
-        {/* Header */}
+
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -114,8 +105,7 @@ export default function ChooseBotCount() {
             How many opponents would you like to play against?
           </motion.p>
         </motion.div>
-        
-        {/* Number Input Section */}
+
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -125,7 +115,6 @@ export default function ChooseBotCount() {
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/5 to-blue-600/5"></div>
           
           <div className="relative flex flex-col items-center">
-            {/* Bot count visualizer - Updated to make items clickable */}
             <div className="mb-6 flex items-center justify-center gap-4 w-full">
               {[...Array(5)].map((_, index) => (
                 <motion.button
@@ -187,8 +176,7 @@ export default function ChooseBotCount() {
             </div>
           </div>
         </motion.div>
-        
-        {/* Button */}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -210,8 +198,7 @@ export default function ChooseBotCount() {
                 <path fillRule="evenodd" d="M10.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L12.586 11H5a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </div>
-            
-            {/* Button hover effect */}
+
             <AnimatePresence>
               {isHovering && (
                 <motion.div

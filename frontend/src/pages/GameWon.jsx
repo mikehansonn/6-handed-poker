@@ -10,7 +10,6 @@ const GameWon = () => {
   const [isAnalyticsHovering, setIsAnalyticsHovering] = useState(false);
   
   useEffect(() => {
-    // Load stats from localStorage instead of relying on location state
     const loadStatsFromLocalStorage = () => {
       const totalHandsPlayed = parseInt(localStorage.getItem("total_hands_played")) || 0;
       const totalHandsWon = parseInt(localStorage.getItem("total_hands_won")) || 0;
@@ -20,8 +19,8 @@ const GameWon = () => {
       const sessionMoneyWon = JSON.parse(localStorage.getItem("session_money_won")) || [];
       
       setFinalStats({
-        startingChips: 200, // Default starting value
-        finalChips: totalMoneyWon, // Use the most recent money count
+        startingChips: 200, 
+        finalChips: totalMoneyWon, 
         handsPlayed: sessionHandsPlayed[0] || 0,
         handsWon: sessionHandsWon[0] || 0,
         sessionProfit: sessionMoneyWon[0] || 0,
@@ -33,7 +32,6 @@ const GameWon = () => {
     
     loadStatsFromLocalStorage();
     
-    // Clean up any game data in localStorage
     const cleanupGame = () => {
       localStorage.removeItem('game_id');
     };
@@ -89,9 +87,7 @@ const GameWon = () => {
             </div>
           )}
           
-          {/* Navigation buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            {/* Return Home button */}
             <motion.button 
               onClick={handleReturnHome}
               onMouseEnter={() => setIsHovering(true)}
@@ -107,8 +103,7 @@ const GameWon = () => {
                 </svg>
                 <span>Return Home</span>
               </div>
-              
-              {/* Button hover effect */}
+
               <AnimatePresence>
                 {isHovering && (
                   <motion.div
@@ -121,7 +116,6 @@ const GameWon = () => {
               </AnimatePresence>
             </motion.button>
 
-            {/* View Analytics button */}
             <motion.button 
               onClick={handleViewAnalytics}
               onMouseEnter={() => setIsAnalyticsHovering(true)}
@@ -137,8 +131,7 @@ const GameWon = () => {
                   <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
                 </svg>
               </div>
-              
-              {/* Button hover effect */}
+
               <AnimatePresence>
                 {isAnalyticsHovering && (
                   <motion.div
@@ -153,8 +146,7 @@ const GameWon = () => {
           </div>
         </div>
       </div>
-      
-      {/* Animated celebration elements */}
+
       <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
         {[...Array(20)].map((_, i) => (
           <div 

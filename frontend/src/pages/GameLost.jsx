@@ -10,7 +10,6 @@ const GameLost = () => {
   const [isAnalyticsHovering, setIsAnalyticsHovering] = useState(false);
   
   useEffect(() => {
-    // Load stats from localStorage instead of relying on location state
     const loadStatsFromLocalStorage = () => {
       const totalHandsPlayed = parseInt(localStorage.getItem("total_hands_played")) || 0;
       const totalHandsWon = parseInt(localStorage.getItem("total_hands_won")) || 0;
@@ -19,19 +18,17 @@ const GameLost = () => {
       const sessionHandsWon = JSON.parse(localStorage.getItem("session_hands_won")) || [];
       
       setFinalStats({
-        startingChips: 200, // Default starting value
+        startingChips: 200,
         handsPlayed: sessionHandsPlayed[0] || 0,
         handsWon: sessionHandsWon[0] || 0,
         totalHandsPlayed,
         totalHandsWon,
         totalMoneyWon,
-        // We could add best hand here if tracked in localStorage
       });
     };
     
     loadStatsFromLocalStorage();
-    
-    // Clean up any game data in localStorage
+
     const cleanupGame = () => {
       localStorage.removeItem('game_id');
     };
@@ -92,9 +89,7 @@ const GameLost = () => {
             </p>
           </div>
           
-          {/* Navigation buttons */}
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            {/* Return Home button */}
             <motion.button 
               onClick={handleReturnHome}
               onMouseEnter={() => setIsHovering(true)}
@@ -110,8 +105,7 @@ const GameLost = () => {
                 </svg>
                 <span>Return Home</span>
               </div>
-              
-              {/* Button hover effect */}
+
               <AnimatePresence>
                 {isHovering && (
                   <motion.div
@@ -124,7 +118,6 @@ const GameLost = () => {
               </AnimatePresence>
             </motion.button>
 
-            {/* View Analytics button */}
             <motion.button 
               onClick={handleViewAnalytics}
               onMouseEnter={() => setIsAnalyticsHovering(true)}
@@ -141,7 +134,6 @@ const GameLost = () => {
                 </svg>
               </div>
               
-              {/* Button hover effect */}
               <AnimatePresence>
                 {isAnalyticsHovering && (
                   <motion.div
@@ -160,7 +152,6 @@ const GameLost = () => {
   );
 };
 
-// Random poker tips to display
 const getRandomPokerTip = () => {
   const tips = [
     "Position is power in poker. Playing from late position gives you more information and control.",

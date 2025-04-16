@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
 import api from './api';
@@ -29,14 +29,11 @@ const GameTable = () => {
   });
   
   const [checkStarted, setCheckStarted] = useState(false);
-  const [error, setError] = useState(null);
   const [betAmount, setBetAmount] = useState('');
-  const [showBetInput, setShowBetInput] = useState(false);
-  const [selectedAction, setSelectedAction] = useState(null);
   const [winner, setWinner] = useState(null);
   const [isHovering, setIsHovering] = useState(false);
   const [gameStats, setGameStats] = useState({
-    startingChips: 200, // Default starting value from game.py
+    startingChips: 200,
     handsPlayed: 0,
     handsWon: 0,
     bestHand: null
@@ -44,6 +41,16 @@ const GameTable = () => {
 
   const [gameEndState, setGameEndState] = useState(null);
   const [handComplete, setHandComplete] = useState(false);
+  
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     const mysteryMode = window.history.state?.usr?.isMysteryMode;
@@ -57,15 +64,15 @@ const GameTable = () => {
     let progressInterval;
     setCommentProgress(100);
     if (botComment && Object.keys(botComment).length > 0) {
-      // Reset progress to 100% when a new comment appears
       
-      // Set up interval to decrease progress over 2000ms (comment display time)
       progressInterval = setInterval(() => {
-        setCommentProgress(prev => {
-          if (prev <= 0) return 0;
-          return prev - 1;
-        });
-      }, 40); // Update every 20ms for smooth animation (100 steps in 2000ms)
+        if (isMounted.current) {
+          setCommentProgress(prev => {
+            if (prev <= 0) return 0;
+            return prev - 1;
+          });
+        }
+      }, 40);
     }
     
     return () => {
@@ -95,14 +102,16 @@ const GameTable = () => {
   useEffect(() => {
     if (gameEndState) {
       const timer = setTimeout(() => {
-        if (gameEndState === 'lost') {
-          navigate('/game-lost', { 
-            state: { gameStats: gameStats }
-          });
-        } else if (gameEndState === 'won') {
-          navigate('/game-won', { 
-            state: { gameStats: gameStats }
-          });
+        if (isMounted.current) {
+          if (gameEndState === 'lost') {
+            navigate('/game-lost', { 
+              state: { gameStats: gameStats }
+            });
+          } else if (gameEndState === 'won') {
+            navigate('/game-won', { 
+              state: { gameStats: gameStats }
+            });
+          }
         }
       }, 5000);
       
@@ -121,14 +130,18 @@ const GameTable = () => {
     let timer;
     if (winner && !gameEndState) {
       timer = setTimeout(() => {
-        setWinner(null);
-        handleStartGame();
+        if (isMounted.current) { 
+          setWinner(null);
+          handleStartGame();
+        }
       }, 3000);
     }
     return () => clearTimeout(timer);
   }, [winner, gameEndState]);
 
   const updateGameState = (newGameState) => {
+    if (!isMounted.current) return; 
+    
     setGameState(newGameState);
     
     const currentState = window.history.state || {};
@@ -151,9 +164,11 @@ const GameTable = () => {
   const processBotActions = async () => {
     const gameId = JSON.parse(localStorage.getItem("game_id")).value;
     try {
-      while (true) {
+      while (isMounted.current) {
         const botResponse = await api.post("/games/bot-action", {game_id: gameId});
         const data = await botResponse.data;
+        
+        if (!isMounted.current) break;
         
         if (data.table_comment) {
           setBotComment({
@@ -161,8 +176,18 @@ const GameTable = () => {
             playerName: data.game_state.players[data.comment_index].name
           });
 
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => {
+            const commentTimer = setTimeout(() => {
+              resolve();
+            }, 2000);
+            
+            if (!isMounted.current) {
+              clearTimeout(commentTimer);
+              resolve();
+            }
+          });
 
+          if (!isMounted.current) break;
         }
         
         updateGameState(data.game_state);
@@ -176,7 +201,19 @@ const GameTable = () => {
           playFoldSound();
         }
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => {
+          const actionTimer = setTimeout(() => {
+            resolve();
+          }, 2000);
+
+          if (!isMounted.current) {
+            clearTimeout(actionTimer);
+            resolve();
+          }
+        });
+
+        if (!isMounted.current) break;
+        
         setBotComment(null);
 
         if (data.status === "hand_complete") {
@@ -189,11 +226,12 @@ const GameTable = () => {
       }
     } catch (err) {
       console.error("Error processing bot actions:", err);
-      setError("Failed to process bot actions");
     }
   };
 
   const handleHandComplete = (finalGameState, winner, player_diff) => {
+    if (!isMounted.current) return; 
+    
     const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
     localStorage.setItem("total__played", hands + 1);
 
@@ -257,24 +295,38 @@ const GameTable = () => {
         }));
       }
     }
-    
-    // Wait 3 seconds before showing the winner
-    setTimeout(() => {
-      playWinSound();
-    }, 2500);
 
-    setTimeout(() => {
-      setWinner(winningPlayer);
-    }, 3000);
+    const winSoundTimer = setTimeout(() => {
+      if (isMounted.current) {
+        playWinSound();
+      }
+    }, 2500);
     
-    // Set handComplete flag to trigger game end check
+    const winnerTimer = setTimeout(() => {
+      if (isMounted.current) { 
+        setWinner(winningPlayer);
+      }
+    }, 3000);
+
+    const timerIds = { winSoundTimer, winnerTimer };
+
     setHandComplete(true);
+
+    return () => {
+      clearTimeout(timerIds.winSoundTimer);
+      clearTimeout(timerIds.winnerTimer);
+    };
   };
 
   const handleStartGame = async () => {
+    if (!isMounted.current) return; 
+    
     try {
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/start-hand", {game_id: gameId});
+
+      if (!isMounted.current) return;
+      
       const data = await response.data;
       updateGameState(data.game_state);
       playDealSound();
@@ -285,19 +337,20 @@ const GameTable = () => {
       }
     } catch (err) {
       console.error("Error starting game:", err);
-      setError("Failed to start game");
     }
   };
 
   const handleActionClick = (action) => {
-    setSelectedAction(action);
-    setShowBetInput(action === 'bet' || action === 'raise');
+    if (!isMounted.current) return;
+    
     if (action !== 'bet' && action !== 'raise') {
       handlePlayerAction(action);
     }
   };
 
   const handlePlayerAction = async (action, amount = null) => {
+    if (!isMounted.current) return; 
+    
     try {
       console.log(action);
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
@@ -306,6 +359,9 @@ const GameTable = () => {
         action: action,
         amount: amount
       });
+
+      if (!isMounted.current) return;
+      
       const data = await response.data;
       updateGameState(data.game_state);
       if (action === 'call' || action === 'bet' || action === 'raise') {
@@ -318,7 +374,6 @@ const GameTable = () => {
         playFoldSound();
       }
 
-      // Reset comment since humans don't make comments
       setBotComment(null);
 
       if (data.status === "hand_complete") {
@@ -328,12 +383,10 @@ const GameTable = () => {
       }
     } catch (err) {
       console.error("Error processing player action:", err);
-      setError("Failed to process player action");
     }
   };
 
   function renderChipStack(amount) {
-    // Define chip values and colors
     const chipValues = [
       { value: 200, color: "from-black to-slate-800", border: "border-slate-600" },
       { value: 100, color: "from-purple-700 to-purple-900", border: "border-purple-400" },
@@ -343,30 +396,26 @@ const GameTable = () => {
       { value: 1, color: "from-blue-600 to-blue-800", border: "border-blue-400" }
     ];
     
-    // Calculate how many of each chip to show
     let remainingAmount = amount;
     let chipCounts = {};
     
     chipValues.forEach(chip => {
       const count = Math.floor(remainingAmount / chip.value);
       if (count > 0) {
-        chipCounts[chip.value] = Math.min(count, 5); // Cap at 5 chips per denomination
+        chipCounts[chip.value] = Math.min(count, 5);
         remainingAmount -= chip.value * chipCounts[chip.value];
       }
     });
     
-    // Generate chip elements
     let chips = [];
     let offset = 0;
     
-    // Display at most 12 chips total for performance
     let totalChips = 0;
     
     Object.entries(chipCounts).forEach(([value, count]) => {
       const chipInfo = chipValues.find(c => c.value === parseInt(value));
       
       for (let i = 0; i < count && totalChips < 12; i++) {
-        // Calculate the chip display size based on its value
         const sizeClass = parseInt(value) >= 100 ? "w-12 h-12" : "w-10 h-10";
         
         chips.push(
@@ -385,7 +434,7 @@ const GameTable = () => {
           </motion.div>
         );
         
-        offset += 4; // Stack height offset
+        offset += 4; 
         totalChips++;
       }
     });
@@ -426,8 +475,8 @@ const GameTable = () => {
 
   const players = gameState.players;
   const numPlayers = players.length;
-  const tableWidth = 800; // Return to original fixed width
-  const tableHeight = 500; // Return to original fixed height
+  const tableWidth = 800; 
+  const tableHeight = 500;
   const centerX = tableWidth / 2;
   const centerY = tableHeight / 2;
 
@@ -435,17 +484,16 @@ const GameTable = () => {
     const totalPositions = numPlayers;
     const angle = -Math.PI/2 + ((index) / totalPositions) * 2 * Math.PI;
     
-    const ellipseA = tableWidth * 0.53; // Horizontal radius
-    const ellipseB = tableHeight * 0.53; // Vertical radius
+    const ellipseA = tableWidth * 0.53;
+    const ellipseB = tableHeight * 0.53; 
     
     const x = centerX + ellipseA * Math.cos(angle);
     const y = centerY + ellipseB * Math.sin(angle);
     
-    const betScale = 0.5; // Place bets 60% of the way between center and player
+    const betScale = 0.5; 
     const betX = centerX - 24 + (ellipseA * betScale) * Math.cos(angle);
     const betY = centerY - 10 + (ellipseB * betScale) * Math.sin(angle);
     
-    // Adjust player card position to center the 120x120 card
     return { 
       x: x - 70, // Half of card width (120/2)
       y: y - 70, // Half of card height (120/2)
@@ -524,7 +572,7 @@ const GameTable = () => {
                 </div>
                 <div className="text-2xl text-white text-center font-semibold">
                   {!winner.is_bot || !hidePlayerNames ? winner.name : (
-                    <span className="text-pink-400">Mystery Player</span>
+                    <span className="text-pink-400">Player</span>
                   )}
                 </div>
               </motion.div>
@@ -667,7 +715,7 @@ const GameTable = () => {
                     <div className="p-3 text-center">
                     <div className={`font-bold text-lg mb-1 ${!player.is_bot ? 'text-cyan-400' : 'text-white'}`}>
                       {!player.is_bot || !hidePlayerNames ? player.name : (
-                        <span className="text-pink-400">Mystery Player {index + 1}</span>
+                        <span className="text-pink-400">Player {index + 1}</span>
                       )}
                     </div>
                       <div className="text-emerald-500 font-semibold text-lg">${player.chips}</div>
@@ -807,7 +855,7 @@ const GameTable = () => {
                   >
                     <div className="font-bold text-white mb-1">
                       {!player.is_bot || !hidePlayerNames ? player.name : (
-                        <span className="text-pink-400">Mystery Player {index + 1}</span>
+                        <span className="text-pink-400">Player {index + 1}</span>
                       )}
                     </div>
                     <div className="text-emerald-500 font-semibold">${player.chips}</div>

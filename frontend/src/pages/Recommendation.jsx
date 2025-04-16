@@ -1,6 +1,5 @@
-// file: Recommendation.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import api from './api'; // same axios instance
+import api from './api'; 
 
 const Recommendation = ({ setIsLoading }) => {
   const [advice, setAdvice] = useState('');
@@ -9,16 +8,13 @@ const Recommendation = ({ setIsLoading }) => {
   const [hasFetched, setHasFetched] = useState(false);
   const [localIsLoading, setLocalIsLoading] = useState(false);
   const [isHidden, setIsHidden] = useState(() => {
-    // Initialize from localStorage, default to false if not found
     const hiddenState = localStorage.getItem("coach_hidden");
     return hiddenState ? JSON.parse(hiddenState) : false;
   });
   
-  // Add these refs to track game state and prevent duplicate API calls
   const fetchingRef = useRef(false);
   const lastGameStateRef = useRef(null);
 
-  // Color scheme matching ActionButtons component
   const actionStyles = {
     fold: "bg-red-500 text-white",
     check: "bg-blue-500 text-white",
@@ -27,21 +23,17 @@ const Recommendation = ({ setIsLoading }) => {
     raise: "bg-purple-500 text-white"
   };
 
-  // Handle hidden state change and save to localStorage
   const toggleHiddenMode = () => {
     const newHiddenState = !isHidden;
     setIsHidden(newHiddenState);
     localStorage.setItem("coach_hidden", JSON.stringify(newHiddenState));
   };
   
-  // Function to get current game state from localStorage
   const getCurrentGameState = () => {
     try {
-      // First, try to get game state from window.history
       const historyState = window.history.state?.usr?.gameState;
       if (historyState) return JSON.stringify(historyState);
       
-      // Fallback to localStorage if available
       const gameIdObj = JSON.parse(localStorage.getItem("game_id"));
       return gameIdObj?.gameState ? JSON.stringify(gameIdObj.gameState) : null;
     } catch (err) {
@@ -50,7 +42,6 @@ const Recommendation = ({ setIsLoading }) => {
     }
   };
 
-  // Update external loading state
   useEffect(() => {
     if (setIsLoading) {
       setIsLoading(localIsLoading);
@@ -58,9 +49,7 @@ const Recommendation = ({ setIsLoading }) => {
   }, [localIsLoading, setIsLoading]);
 
   useEffect(() => {
-    // Function to fetch advice
     const fetchAdvice = async () => {
-      // Skip if already fetching, hidden, or no game ID
       if (fetchingRef.current || isHidden) {
         return;
       }
@@ -74,19 +63,15 @@ const Recommendation = ({ setIsLoading }) => {
         return;
       }
       
-      // Get current game state to compare
       const currentGameState = getCurrentGameState();
       
-      // Skip if the game state hasn't changed
       if (currentGameState && currentGameState === lastGameStateRef.current) {
         return;
       }
       
-      // Update refs to prevent duplicate calls
       fetchingRef.current = true;
       lastGameStateRef.current = currentGameState;
       
-      // Set local loading state and dispatch event
       setLocalIsLoading(true);
       window.dispatchEvent(new Event('recommendationLoadingStart'));
 
@@ -104,18 +89,14 @@ const Recommendation = ({ setIsLoading }) => {
         setError(err.message);
       } finally {
         setHasFetched(true);
-        // End loading state
         setLocalIsLoading(false);
         window.dispatchEvent(new Event('recommendationLoadingEnd'));
         fetchingRef.current = false;
       }
     };
 
-    // Only fetch when component mounts or isHidden changes
     fetchAdvice();
     
-    // Set up a custom event listener to trigger advice fetching
-    // This will be dispatched from GameTable when a player makes a move
     const handleGameStateUpdate = () => {
       fetchAdvice();
     };
@@ -127,7 +108,6 @@ const Recommendation = ({ setIsLoading }) => {
     };
   }, [isHidden]);
 
-  // Hidden mode component
   if (isHidden) {
     return (
       <div className="bg-gray-800/80 w-72 backdrop-blur-sm text-white p-4 rounded-lg ml-4 shadow-lg border-l-4 border-gray-500">
@@ -205,7 +185,6 @@ const Recommendation = ({ setIsLoading }) => {
     );
   }
 
-  // When we have advice to show
   return (
     <div className="bg-gray-800/80 backdrop-blur-sm text-white p-4 rounded-lg ml-4 shadow-lg transition-all duration-300 border-l-4 border-green-500 w-96">
       <div className="flex justify-between items-center mb-2">
@@ -222,7 +201,6 @@ const Recommendation = ({ setIsLoading }) => {
         </button>
       </div>
       
-      {/* Display recommended action with matching color scheme */}
       {action && (
         <div className="mb-2">
           <span className="text-sm font-medium mr-2">Recommended:</span>
@@ -234,7 +212,6 @@ const Recommendation = ({ setIsLoading }) => {
         </div>
       )}
       
-      {/* Always use the larger height for better readability */}
       <div 
         className="text-sm whitespace-pre-line overflow-y-auto max-h-60"
         style={{

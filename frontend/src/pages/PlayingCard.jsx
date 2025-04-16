@@ -27,13 +27,11 @@ const PlayingCard = ({ card }) => {
       }`}
     >
       {isHidden ? (
-        // Back of card design
         <div className="w-full h-full flex items-center justify-center">
           <div className="w-10 h-16 border-2 border-blue-300 rounded-sm bg-blue-400 flex items-center justify-center">
           </div>
         </div>
       ) : (
-        // Front of card design
         <>
           <div className={`absolute top-1 left-1 font-mono font-bold text-md ${textColor}`}>
             {rank}

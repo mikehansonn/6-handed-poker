@@ -1,46 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
-import api from './api'; // same axios instance
+import api from './api';
 
 const CoachChat = ({ setIsLoading }) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState('');
-  const [error, setError] = useState(null);
   const [isExpanded, setIsExpanded] = useState(() => {
-    // Initialize from localStorage, default to false if not found
     const savedState = localStorage.getItem("coach_chat_expanded");
     return savedState ? JSON.parse(savedState) : false;
   });
   const [isHidden, setIsHidden] = useState(() => {
-    // Initialize from localStorage, default to false if not found
     const hiddenState = localStorage.getItem("coach_chat_hidden");
     return hiddenState ? JSON.parse(hiddenState) : false;
   });
-  const [isThinking, setIsThinking] = useState(false); // New state for loading indicator
+  const [isThinking, setIsThinking] = useState(false); 
   
   const messagesEndRef = useRef(null);
 
-  // Handle expand state change and save to localStorage
   const handleExpandToggle = () => {
     const newState = !isExpanded;
     setIsExpanded(newState);
     localStorage.setItem("coach_chat_expanded", JSON.stringify(newState));
   };
 
-  // Handle hidden state change and save to localStorage
-  const toggleHiddenMode = () => {
-    const newHiddenState = !isHidden;
-    setIsHidden(newHiddenState);
-    localStorage.setItem("coach_chat_hidden", JSON.stringify(newHiddenState));
-  };
-
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isThinking]);
 
-  // Add welcome message when component mounts
   useEffect(() => {
     if (messages.length === 0 && !isHidden) {
       setMessages([{
@@ -59,8 +46,7 @@ const CoachChat = ({ setIsLoading }) => {
     e.preventDefault();
     
     if (!inputValue.trim()) return;
-    
-    // Auto-expand the chat when user sends a message
+
     if (!isExpanded) {
       setIsExpanded(true);
       localStorage.setItem("coach_chat_expanded", JSON.stringify(true));
@@ -74,21 +60,17 @@ const CoachChat = ({ setIsLoading }) => {
     
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
-    
-    // Dispatch loading start event and set local loading state
+
     window.dispatchEvent(new Event('coachLoadingStart'));
     if (setIsLoading) setIsLoading(true);
-    setIsThinking(true); // Show the loading indicator
-    
-    setError(null);
+    setIsThinking(true); 
     
     const localGameIdObj = JSON.parse(localStorage.getItem("game_id"));
     const gameId = localGameIdObj?.value || null;
     
     if (!gameId) {
-      setError("Game session not found");
       if (setIsLoading) setIsLoading(false);
-      setIsThinking(false); // Hide the loading indicator
+      setIsThinking(false);
       window.dispatchEvent(new Event('coachLoadingEnd'));
       return;
     }
@@ -108,18 +90,15 @@ const CoachChat = ({ setIsLoading }) => {
       setMessages(prev => [...prev, coachResponse]);
     } catch (err) {
       console.error("Error getting coach response:", err);
-      setError("Failed to get a response from the coach");
       
-      // Add error message
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         sender: 'system',
         text: "Sorry, I couldn't process your question right now."
       }]);
     } finally {
-      // Dispatch loading end event and set local loading state
       if (setIsLoading) setIsLoading(false);
-      setIsThinking(false); // Hide the loading indicator
+      setIsThinking(false); 
       window.dispatchEvent(new Event('coachLoadingEnd'));
     }
   };
@@ -141,8 +120,7 @@ const CoachChat = ({ setIsLoading }) => {
           </button>
         </div>
       </div>
-      
-      {/* Chat messages container */}
+
       <div 
         className="flex-1 overflow-y-auto mb-3 space-y-3"
         style={{
@@ -191,8 +169,7 @@ const CoachChat = ({ setIsLoading }) => {
             </div>
           </div>
         ))}
-        
-        {/* Loading indicator - Now conditionally shown */}
+
         {isThinking && (
           <div className="flex justify-start">
             <div className="bg-gray-700 text-white px-3 py-2 rounded-lg">
@@ -207,8 +184,7 @@ const CoachChat = ({ setIsLoading }) => {
         
         <div ref={messagesEndRef} />
       </div>
-      
-      {/* Input form */}
+
       <form onSubmit={handleSubmit} className="flex">
         <input
           type="text"

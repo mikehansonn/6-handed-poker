@@ -1,4 +1,3 @@
-// src/pages/Home.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,16 +15,13 @@ export default function Home() {
     navigate('/analytics');
   };
 
-  // For the card icon animations in background
   const cardSuits = ['♠', '♥', '♦', '♣'];
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-gray-950 text-white p-4 sm:p-6 overflow-hidden">
-      {/* Animated background */}
       <div className="fixed inset-0 z-0">
         <div className="absolute -inset-[10%] bg-gradient-radial from-emerald-500/10 via-transparent to-transparent blur-3xl"></div>
         
-        {/* Animated playing card symbols - FIXED with improved visibility */}
         <div className="overflow-hidden h-full w-full absolute z-0">
           {cardSuits.flatMap((suit, suitIndex) => 
             [...Array(5)].map((_, i) => (
@@ -65,7 +61,6 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="relative z-10 max-w-xl w-full bg-gray-900/90 backdrop-blur-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-gray-800 overflow-hidden"
       >
-        {/* Glowing backgrounds */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -79,7 +74,6 @@ export default function Home() {
           className="absolute -bottom-20 -right-20 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl"
         />
         
-        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,7 +99,6 @@ export default function Home() {
           </motion.p>
         </motion.div>
         
-        {/* Game features section */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -171,14 +164,12 @@ export default function Home() {
           </div>
         </motion.div>
         
-        {/* Buttons container */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.6, duration: 0.5 }}
           className="flex flex-col sm:flex-row justify-center gap-4"
         >
-          {/* Play game button */}
           <motion.button 
             onClick={handlePlayGame}
             onMouseEnter={() => setIsHovering(true)}
@@ -195,7 +186,6 @@ export default function Home() {
               </svg>
             </div>
             
-            {/* Button hover effect */}
             <AnimatePresence>
               {isHovering && (
                 <motion.div
@@ -208,7 +198,6 @@ export default function Home() {
             </AnimatePresence>
           </motion.button>
 
-          {/* Analytics button */}
           <motion.button 
             onClick={handleViewAnalytics}
             onMouseEnter={() => setIsAnalyticsHovering(true)}
@@ -224,8 +213,7 @@ export default function Home() {
                 <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zM8 7a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zM14 4a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z" />
               </svg>
             </div>
-            
-            {/* Button hover effect */}
+
             <AnimatePresence>
               {isAnalyticsHovering && (
                 <motion.div
@@ -238,8 +226,7 @@ export default function Home() {
             </AnimatePresence>
           </motion.button>
         </motion.div>
-        
-        {/* Card animation at the bottom */}
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
