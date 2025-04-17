@@ -232,15 +232,9 @@ const GameTable = () => {
   const handleHandComplete = (finalGameState, winner, player_diff) => {
     if (!isMounted.current) return; 
     
-    const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
-    localStorage.setItem("total_hands_played", hands + 1);
 
     const money = parseInt(localStorage.getItem("total_money_won")) || 0;
     localStorage.setItem("total_money_won", money + player_diff);
-
-    var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [0];
-    session_hands[0] += 1
-    localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
 
     var session_money = JSON.parse(localStorage.getItem("session_money_won")) || [0];
     session_money[0] += player_diff
@@ -324,8 +318,14 @@ const GameTable = () => {
     try {
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/start-hand", {game_id: gameId});
-
+      
       if (!isMounted.current) return;
+      const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
+      localStorage.setItem("total_hands_played", hands + 1);
+
+      var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [0];
+      session_hands[0] += 1
+      localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
       
       const data = await response.data;
       updateGameState(data.game_state);
@@ -357,7 +357,7 @@ const GameTable = () => {
       }
 
       var pfr_check = localStorage.getItem('pfr_check') === 'true' || false;
-      if ((action === 'bet' || action === 'raise') && pfr_check) {
+      if ((action === 'bet' || action === 'raise') && pfr_check && gameState['game_stage'] === 'preflop' ) {
         var session_pfr = JSON.parse(localStorage.getItem("session_pfr")) || [0];
         session_pfr[0] += 1
 
@@ -371,7 +371,7 @@ const GameTable = () => {
           && (action === 'call' ||  action === 'bet' || action === 'raise') 
           && (gameState['players'][0]['current_street_contribution'] < 2 
           || (gameState['players'][0]['current_street_contribution'] === 2
-          && gameState['current_bet'] != gameState['players'][0]['current_street_contribution']
+          && gameState['current_bet'] !== gameState['players'][0]['current_street_contribution']
           && gameState['players'][0]['position'] === 'Big Blind'))) {
         var session_vpip = JSON.parse(localStorage.getItem("session_vpip")) || [0];
         session_vpip[0] += 1
