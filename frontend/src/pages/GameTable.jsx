@@ -352,6 +352,34 @@ const GameTable = () => {
     if (!isMounted.current) return; 
     
     try {
+      if (gameState["game_stage"] === 'preflop' && gameState['players'][0]['current_street_contribution'] < 3) {
+        localStorage.setItem("pfr_check", true);
+      }
+
+      var pfr_check = localStorage.getItem('pfr_check') === 'true' || false;
+      if ((action === 'bet' || action === 'raise') && pfr_check) {
+        var session_pfr = JSON.parse(localStorage.getItem("session_pfr")) || [0];
+        session_pfr[0] += 1
+
+        localStorage.setItem("pfr_check", false);
+        localStorage.setItem("session_pfr", JSON.stringify(session_pfr));
+        const total_pfr = parseInt(localStorage.getItem("total_pfr")) || 0;
+        localStorage.setItem("total_pfr", total_pfr + 1);
+      }
+
+      if (gameState['game_stage'] === 'preflop' 
+          && (action === 'call' ||  action === 'bet' || action === 'raise') 
+          && (gameState['players'][0]['current_street_contribution'] < 2 
+          || (gameState['players'][0]['current_street_contribution'] === 2
+          && gameState['current_bet'] != gameState['players'][0]['current_street_contribution']
+          && gameState['players'][0]['position'] === 'Big Blind'))) {
+        var session_vpip = JSON.parse(localStorage.getItem("session_vpip")) || [0];
+        session_vpip[0] += 1
+
+        localStorage.setItem("session_vpip", JSON.stringify(session_vpip));
+        const total_vpip = parseInt(localStorage.getItem("total_vpip")) || 0;
+        localStorage.setItem("total_vpip", total_vpip + 1);
+      }
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/player-action", {
         game_id: gameId,

@@ -11,14 +11,20 @@ export default function Analytics() {
     sessionHandsPlayed: [],
     sessionHandsWon: [],
     sessionMoneyWon: [],
+    sessionPFR: [],
+    sessionVPIP: [],
     totalHandsPlayed: 0,
     totalHandsWon: 0,
     totalMoneyWon: 0,
+    totalPFR: 0,
+    totalVPIP: 0,
     gameSizes: [],
     botSelection: {}
   });
   const [winRate, setWinRate] = useState(0);
   const [avgMoneyPerSession, setAvgMoneyPerSession] = useState(0);
+  const [pfrPercentage, setPfrPercentage] = useState(0);
+  const [vpipPercentage, setVpipPercentage] = useState(0);
   const [favoriteBot, setFavoriteBot] = useState({ name: '', count: 0 });
   const [mostSuccessfulSize, setMostSuccessfulSize] = useState({ size: 0, count: 0 });
 
@@ -47,9 +53,13 @@ export default function Analytics() {
     const sessionHandsPlayed = JSON.parse(localStorage.getItem("session_hands_played")) || [];
     const sessionHandsWon = JSON.parse(localStorage.getItem("session_hands_won")) || [];
     const sessionMoneyWon = JSON.parse(localStorage.getItem("session_money_won")) || [];
+    const sessionPFR = JSON.parse(localStorage.getItem("session_pfr")) || [];
+    const sessionVPIP = JSON.parse(localStorage.getItem("session_vpip")) || [];
     const totalHandsPlayed = parseInt(localStorage.getItem("total_hands_played")) || 0;
     const totalHandsWon = parseInt(localStorage.getItem("total_hands_won")) || 0;
     const totalMoneyWon = parseInt(localStorage.getItem("total_money_won")) || 0;
+    const totalPFR = parseInt(localStorage.getItem("total_pfr")) || 0;
+    const totalVPIP = parseInt(localStorage.getItem("total_vpip")) || 0;
     const gameSizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     const botSelection = JSON.parse(localStorage.getItem("bot_selection")) || {};
     const totalSessionsPlayed = JSON.parse(localStorage.getItem("total_sessions_played")) || 0;
@@ -58,9 +68,13 @@ export default function Analytics() {
       sessionHandsPlayed,
       sessionHandsWon,
       sessionMoneyWon,
+      sessionPFR,
+      sessionVPIP,
       totalHandsPlayed,
       totalHandsWon,
       totalMoneyWon,
+      totalPFR,
+      totalVPIP,
       gameSizes,
       botSelection
     });
@@ -68,6 +82,8 @@ export default function Analytics() {
     // Calculate additional stats
     if (totalHandsPlayed > 0) {
       setWinRate(((totalHandsWon / totalHandsPlayed) * 100).toFixed(1));
+      setPfrPercentage(((totalPFR / totalHandsPlayed) * 100).toFixed(1));
+      setVpipPercentage(((totalVPIP / totalHandsPlayed) * 100).toFixed(1));
     }
 
     setAvgMoneyPerSession((totalMoneyWon / totalSessionsPlayed).toFixed(2));
@@ -101,6 +117,22 @@ export default function Analytics() {
     })).reverse();
   };
 
+  // Format data for playing style chart
+  const getPlayingStyleData = () => {
+    return analyticsData.sessionHandsPlayed.map((hands, index) => {
+      // Calculate percentages for each session
+      const vpipPercent = hands > 0 ? (analyticsData.sessionVPIP[index] / hands) * 100 : 0;
+      const pfrPercent = hands > 0 ? (analyticsData.sessionPFR[index] / hands) * 100 : 0;
+      
+      return {
+        session: `Game ${analyticsData.sessionHandsPlayed.length - index}`,
+        VPIP: parseFloat(vpipPercent.toFixed(1)),
+        PFR: parseFloat(pfrPercent.toFixed(1)),
+        hands: hands
+      };
+    }).reverse();
+  };
+
   // Format data for game sizes pie chart
   const getGameSizeData = () => {
     return analyticsData.gameSizes.map((count, index) => ({
@@ -128,6 +160,21 @@ export default function Analytics() {
           <p className={`font-semibold ${payload[2].value >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             Money: ${payload[2].value}
           </p>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Custom tooltip for the Playing Style chart
+  const PlayingStyleTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-gray-800 p-4 border border-gray-700 rounded-lg shadow-lg">
+          <p className="text-cyan-400 font-bold">{label}</p>
+          <p className="text-purple-400">VPIP: {payload[0].value}%</p>
+          <p className="text-orange-400">PFR: {payload[1].value}%</p>
+          <p className="text-gray-300 text-sm mt-1">Based on {payload[2].value} hands</p>
         </div>
       );
     }
@@ -266,11 +313,28 @@ export default function Analytics() {
             </div>
           </div>
           
+          {/* VPIP / PFR Stats */}
+          <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-orange-400/5"></div>
+            <div className="relative">
+              <div className="text-purple-400 text-4xl mb-2">♦</div>
+              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-1">Playing Style</h3>
+              <div className="flex flex-col">
+                <div className="flex items-baseline">
+                  <div className="text-lg font-bold text-purple-400">VPIP: {vpipPercentage}%</div>
+                </div>
+                <div className="flex items-baseline mt-1">
+                  <div className="text-lg font-bold text-orange-400">PFR: {pfrPercentage}%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Total Money Won */}
           <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-r from-yellow-600/5 to-yellow-400/5"></div>
             <div className="relative">
-              <div className="text-yellow-400 text-4xl mb-2">♦</div>
+              <div className="text-yellow-400 text-4xl mb-2">♥</div>
               <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-1">Total Profit</h3>
               <div className="flex items-baseline">
                 <div className={`text-3xl font-bold ${analyticsData.totalMoneyWon >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -280,28 +344,13 @@ export default function Analytics() {
               </div>
             </div>
           </div>
-          
-          {/* Average Per Session */}
-          <div className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-600/5 to-pink-400/5"></div>
-            <div className="relative">
-              <div className="text-pink-400 text-4xl mb-2">♥</div>
-              <h3 className="text-sm uppercase tracking-wider text-gray-400 mb-1">Avg. Per Session</h3>
-              <div className="flex items-baseline">
-                <div className={`text-3xl font-bold ${avgMoneyPerSession >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                  ${avgMoneyPerSession}
-                </div>
-                <div className="ml-2 text-gray-400 text-sm">per game</div>
-              </div>
-            </div>
-          </div>
         </motion.div>
         
         {/* Session Performance Chart */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
           className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden mb-8"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/5 to-blue-600/5"></div>
@@ -335,12 +384,51 @@ export default function Analytics() {
             </div>
           </div>
         </motion.div>
+
+        {/* Playing Style Chart - New Chart */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden mb-8"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-orange-600/5"></div>
+          
+          <div className="relative">
+            <h2 className="text-xl font-bold mb-6 text-center bg-gradient-to-r from-purple-400 to-orange-400 bg-clip-text text-transparent">
+              Playing Style History (VPIP/PFR)
+            </h2>
+            
+            <div className="w-full h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart
+                  data={getPlayingStyleData()}
+                  margin={{
+                    top: 5,
+                    right: 30,
+                    left: 20,
+                    bottom: 5,
+                  }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                  <XAxis dataKey="session" stroke="#6B7280" />
+                  <YAxis stroke="#6B7280" domain={[0, 100]} label={{ value: '%', position: 'insideLeft', angle: -90, dy: 30, style: { fill: '#9CA3AF' } }} />
+                  <Tooltip content={<PlayingStyleTooltip />} />
+                  <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                  <Line type="monotone" dataKey="VPIP" name="VPIP %" stroke="#A855F7" strokeWidth={2} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="PFR" name="PFR %" stroke="#F97316" strokeWidth={2} activeDot={{ r: 8 }} />
+                  <Line type="monotone" dataKey="hands" name="Hands" stroke="#6B7280" strokeWidth={1} strokeDasharray="5 5" dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </motion.div>
         
         {/* Two column layout for smaller charts */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
           className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8"
         >
           {/* Game Size Distribution */}
@@ -428,7 +516,7 @@ export default function Analytics() {
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.5 }}
+          transition={{ delay: 0.8, duration: 0.5 }}
           className="bg-gray-800/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-700/30 relative overflow-hidden mb-8"
         >
           <div className="absolute inset-0 bg-gradient-to-r from-rose-600/5 to-orange-600/5"></div>
@@ -469,7 +557,7 @@ export default function Analytics() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.5 }}
+          transition={{ delay: 0.9, duration: 0.5 }}
           className="flex justify-center"
         >
           <motion.button 

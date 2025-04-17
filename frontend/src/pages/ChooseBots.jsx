@@ -261,20 +261,28 @@ export default function ChooseBots() {
       
       const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
       storeWithExpiry('game_id', response.data.game_id, TWENTY_FOUR_HOURS);
-      var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [];
-      var session_wins = JSON.parse(localStorage.getItem("session_hands_won")) || [];
-      var session_money = JSON.parse(localStorage.getItem("session_money_won")) || [];
+      var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || new Array(10).fill(0);
+      var session_wins = JSON.parse(localStorage.getItem("session_hands_won")) || new Array(10).fill(0);
+      var session_money = JSON.parse(localStorage.getItem("session_money_won")) || new Array(10).fill(0);
+      var session_vpip = JSON.parse(localStorage.getItem("session_vpip")) || new Array(10).fill(0);
+      var session_pfr = JSON.parse(localStorage.getItem("session_pfr")) || new Array(10).fill(0);
       if (session_hands.length >= 10) {
         session_hands.pop();
         session_wins.pop();
         session_money.pop();
+        session_vpip.pop();
+        session_pfr.pop();
       }
       session_hands.unshift(0);
       session_wins.unshift(0);
       session_money.unshift(0);
+      session_vpip.unshift(0);
+      session_pfr.unshift(0);
       localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
       localStorage.setItem("session_hands_won", JSON.stringify(session_wins));
       localStorage.setItem("session_money_won", JSON.stringify(session_money));
+      localStorage.setItem("session_vpip", JSON.stringify(session_vpip));
+      localStorage.setItem("session_pfr", JSON.stringify(session_pfr));
       
       navigate('/game-table', { 
         state: { 
