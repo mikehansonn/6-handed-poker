@@ -195,8 +195,6 @@ class HandEvaluator:
             if player and player.pocket:  # Only evaluate hands of players who haven't folded
                 result = HandEvaluator.evaluate_hand(player.pocket, community_cards)
                 player_hands.append((i, result))
-            else:
-                print("check1")
 
         if not player_hands:
             return {}

@@ -233,7 +233,7 @@ const GameTable = () => {
     if (!isMounted.current) return; 
     
     const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
-    localStorage.setItem("total__played", hands + 1);
+    localStorage.setItem("total_hands_played", hands + 1);
 
     const money = parseInt(localStorage.getItem("total_money_won")) || 0;
     localStorage.setItem("total_money_won", money + player_diff);
@@ -352,7 +352,6 @@ const GameTable = () => {
     if (!isMounted.current) return; 
     
     try {
-      console.log(action);
       const gameId = JSON.parse(localStorage.getItem("game_id")).value;
       const response = await api.post("/games/player-action", {
         game_id: gameId,

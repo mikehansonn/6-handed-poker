@@ -332,7 +332,6 @@ class OptimizedPokerBot:
                 max_tokens=50
             )
             result = response.choices[0].message.content.strip()
-            print(result)
             parsed_response = json.loads(result)
 
             # Validate required keys
