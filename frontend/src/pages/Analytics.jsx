@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Analytics() {
   const navigate = useNavigate();
@@ -22,7 +22,6 @@ export default function Analytics() {
     botSelection: {}
   });
   const [winRate, setWinRate] = useState(0);
-  const [avgMoneyPerSession, setAvgMoneyPerSession] = useState(0);
   const [pfrPercentage, setPfrPercentage] = useState(0);
   const [vpipPercentage, setVpipPercentage] = useState(0);
   const [favoriteBot, setFavoriteBot] = useState({ name: '', count: 0 });
@@ -62,7 +61,6 @@ export default function Analytics() {
     const totalVPIP = parseInt(localStorage.getItem("total_vpip")) || 0;
     const gameSizes = JSON.parse(localStorage.getItem("game_sizes")) || [0, 0, 0, 0, 0];
     const botSelection = JSON.parse(localStorage.getItem("bot_selection")) || {};
-    const totalSessionsPlayed = JSON.parse(localStorage.getItem("total_sessions_played")) || 0;
 
     setAnalyticsData({
       sessionHandsPlayed,
@@ -85,8 +83,6 @@ export default function Analytics() {
       setPfrPercentage(((totalPFR / totalHandsPlayed) * 100).toFixed(1));
       setVpipPercentage(((totalVPIP / totalHandsPlayed) * 100).toFixed(1));
     }
-
-    setAvgMoneyPerSession((totalMoneyWon / totalSessionsPlayed).toFixed(2));
 
     // Find favorite bot
     if (Object.keys(botSelection).length > 0) {

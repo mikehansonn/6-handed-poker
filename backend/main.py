@@ -17,7 +17,7 @@ app = FastAPI()
 # Also need to add the URL of our Webpage here so they can connect
 origins = [
     "http://localhost:3000"
-    #, "https://aicehigh.com/"
+    , "https://aicehigh.netlify.app/"
 ]
 
 app.add_middleware(

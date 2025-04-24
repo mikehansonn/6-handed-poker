@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import UnifiedCoach from './UnifiedCoach';
-import SoundManager from './SoundManager';
 
 const ActionButtons = ({ gameState, handleActionClick, betAmount, setBetAmount, handlePlayerAction }) => {
   const [sliderValue, setSliderValue] = useState(0);

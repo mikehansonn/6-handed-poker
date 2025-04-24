@@ -7,7 +7,7 @@ const getBaseUrl = () => {
                   
   return isLocal 
     ? 'http://localhost:8000'
-    : 'https://aice-high.com';
+    : 'https://six-handed-poker.onrender.com';
 };
 
 const api = axios.create({

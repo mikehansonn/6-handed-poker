@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from 'framer-motion';
 import api from './api';
@@ -126,20 +126,7 @@ const GameTable = () => {
     }
   }, [gameState]);
 
-  useEffect(() => {
-    let timer;
-    if (winner && !gameEndState) {
-      timer = setTimeout(() => {
-        if (isMounted.current) { 
-          setWinner(null);
-          handleStartGame();
-        }
-      }, 3000);
-    }
-    return () => clearTimeout(timer);
-  }, [winner, gameEndState]);
-
-  const updateGameState = (newGameState) => {
+  const updateGameState = useCallback((newGameState) => {
     if (!isMounted.current) return; 
     
     setGameState(newGameState);
@@ -159,77 +146,9 @@ const GameTable = () => {
     );
     
     window.dispatchEvent(new CustomEvent('gameStateUpdated'));
-  };
+  }, []);
 
-  const processBotActions = async () => {
-    const gameId = JSON.parse(localStorage.getItem("game_id")).value;
-    try {
-      while (isMounted.current) {
-        const botResponse = await api.post("/games/bot-action", {game_id: gameId});
-        const data = await botResponse.data;
-        
-        if (!isMounted.current) break;
-        
-        if (data.table_comment) {
-          setBotComment({
-            text: data.table_comment,
-            playerName: data.game_state.players[data.comment_index].name
-          });
-
-          await new Promise((resolve) => {
-            const commentTimer = setTimeout(() => {
-              resolve();
-            }, 2000);
-            
-            if (!isMounted.current) {
-              clearTimeout(commentTimer);
-              resolve();
-            }
-          });
-
-          if (!isMounted.current) break;
-        }
-        
-        updateGameState(data.game_state);
-        if (data.action === 'call' || data.action === 'bet' || data.action === 'raise') {
-          playBetSound();
-        }
-        else if (data.action === 'check') {
-          playCheckSound();
-        }
-        else if (data.action === 'fold') {
-          playFoldSound();
-        }
-
-        await new Promise((resolve) => {
-          const actionTimer = setTimeout(() => {
-            resolve();
-          }, 2000);
-
-          if (!isMounted.current) {
-            clearTimeout(actionTimer);
-            resolve();
-          }
-        });
-
-        if (!isMounted.current) break;
-        
-        setBotComment(null);
-
-        if (data.status === "hand_complete") {
-          handleHandComplete(data.game_state, data.winner, data.player_diff);
-          break;
-        }
-        if (!data.game_state.players[data.game_state.current_player_idx].is_bot) {
-          break;
-        }
-      }
-    } catch (err) {
-      console.error("Error processing bot actions:", err);
-    }
-  };
-
-  const handleHandComplete = (finalGameState, winner, player_diff) => {
+  const handleHandComplete = useCallback((finalGameState, winner, player_diff) => {
     if (!isMounted.current) return; 
     
 
@@ -310,9 +229,77 @@ const GameTable = () => {
       clearTimeout(timerIds.winSoundTimer);
       clearTimeout(timerIds.winnerTimer);
     };
-  };
+  }, [gameState, gameStats, setGameStats, setWinner, playWinSound, setHandComplete]);
 
-  const handleStartGame = async () => {
+  const processBotActions = useCallback(async () => {
+    const gameId = JSON.parse(localStorage.getItem("game_id")).value;
+    try {
+      while (isMounted.current) {
+        const botResponse = await api.post("/games/bot-action", {game_id: gameId});
+        const data = await botResponse.data;
+        
+        if (!isMounted.current) break;
+        
+        if (data.table_comment) {
+          setBotComment({
+            text: data.table_comment,
+            playerName: data.game_state.players[data.comment_index].name
+          });
+
+          await new Promise((resolve) => {
+            const commentTimer = setTimeout(() => {
+              resolve();
+            }, 2000);
+            
+            if (!isMounted.current) {
+              clearTimeout(commentTimer);
+              resolve();
+            }
+          });
+
+          if (!isMounted.current) break;
+        }
+        
+        updateGameState(data.game_state);
+        if (data.action === 'call' || data.action === 'bet' || data.action === 'raise') {
+          playBetSound();
+        }
+        else if (data.action === 'check') {
+          playCheckSound();
+        }
+        else if (data.action === 'fold') {
+          playFoldSound();
+        }
+
+        await new Promise((resolve) => {
+          const actionTimer = setTimeout(() => {
+            resolve();
+          }, 2000);
+
+          if (!isMounted.current) {
+            clearTimeout(actionTimer);
+            resolve();
+          }
+        });
+
+        if (!isMounted.current) break;
+        
+        setBotComment(null);
+
+        if (data.status === "hand_complete") {
+          handleHandComplete(data.game_state, data.winner, data.player_diff);
+          break;
+        }
+        if (!data.game_state.players[data.game_state.current_player_idx].is_bot) {
+          break;
+        }
+      }
+    } catch (err) {
+      console.error("Error processing bot actions:", err);
+    }
+  }, [playBetSound, playCheckSound, playFoldSound, updateGameState, handleHandComplete]);
+
+  const handleStartGame = useCallback(async () => {
     if (!isMounted.current) return; 
     
     try {
@@ -322,7 +309,7 @@ const GameTable = () => {
       if (!isMounted.current) return;
       const hands = parseInt(localStorage.getItem("total_hands_played")) || 0;
       localStorage.setItem("total_hands_played", hands + 1);
-
+  
       var session_hands = JSON.parse(localStorage.getItem("session_hands_played")) || [0];
       session_hands[0] += 1
       localStorage.setItem("session_hands_played", JSON.stringify(session_hands));
@@ -331,14 +318,27 @@ const GameTable = () => {
       updateGameState(data.game_state);
       playDealSound();
       setCheckStarted(true);
-
+  
       if (data.game_state.players[data.game_state.current_player_idx].is_bot) {
         await processBotActions();
       }
     } catch (err) {
       console.error("Error starting game:", err);
     }
-  };
+  }, [updateGameState, playDealSound, processBotActions]);
+
+  useEffect(() => {
+    let timer;
+    if (winner && !gameEndState) {
+      timer = setTimeout(() => {
+        if (isMounted.current) { 
+          setWinner(null);
+          handleStartGame();
+        }
+      }, 3000);
+    }
+    return () => clearTimeout(timer);
+  }, [winner, gameEndState, handleStartGame]);
 
   const handleActionClick = (action) => {
     if (!isMounted.current) return;
