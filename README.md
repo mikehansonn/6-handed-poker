@@ -11,29 +11,33 @@ A full-stack 6-handed poker web app featuring a **React frontend** and a **FastA
 ## How to Run the Project Locally
 
 ### 1. Clone the repository
-git clone https://github.com/mikehansonn/6-handed-poker.git
-cd 6-handed-poker
+```git clone https://github.com/mikehansonn/6-handed-poker.git```
+```cd 6-handed-poker```
 
 ### 2. Backend Setup (FastAPI)
-```python -m venv venv```
-.\venv\Scripts\activate
+```cd backend```
 
-cd backend
-uvicorn main:app --reload
+```python -m venv venv```
+
+```.\venv\Scripts\activate```
+
+```pip install requirements.txt```
+
+```uvicorn main:app --reload```
 
 The FastAPI backend will now be running at:  http://127.0.0.1:8000
 
 ### 3. Frontend Setup (React) 
 
-cd ../frontend
+```cd ../frontend```
 
-npm install
+```npm install```
 
-npm start
+```npm start```
 
 The React app will now be running at: http://localhost:3000
 ## Dependencies  (Python Backend, requirements.txt)
-
+```
 annotated-types==0.7.0
 anyio==4.8.0
 certifi==2025.1.31
@@ -55,9 +59,10 @@ starlette==0.45.3
 tqdm==4.67.1
 typing_extensions==4.12.2
 uvicorn==0.34.0
+```
 
 ## React Frontend (package.json) 
-
+```
 {
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -80,8 +85,26 @@ uvicorn==0.34.0
     "tailwindcss": "^3.4.17"
   }
 }
+```
 
 
 ## Make sure to create a .env file inside the backend folder with necessary API keys like: 
 
-OPENAI_API_KEY=your-openai-key-here
+```OPENAI_API_KEY=your-openai-key-here```
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
