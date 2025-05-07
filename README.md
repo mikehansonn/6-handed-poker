@@ -22,7 +22,7 @@ A full-stack 6-handed poker web app featuring a **React frontend** and a **FastA
 
 ```.\venv\Scripts\activate```
 
-```pip install requirements.txt```
+```pip install -r requirements.txt```
 
 ```uvicorn main:app --reload```
 
