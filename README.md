@@ -37,7 +37,7 @@ The FastAPI backend will now be running at:  http://127.0.0.1:8000
 ```npm start```
 
 The React app will now be running at: http://localhost:3000
-## Dependencies  (Python Backend, requirements.txt)
+## Python Backend Dependencies (requirements.txt)
 ```
 annotated-types==0.7.0
 anyio==4.8.0
