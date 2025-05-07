@@ -12,6 +12,7 @@ A full-stack 6-handed poker web app featuring a **React frontend** and a **FastA
 
 ### 1. Clone the repository
 ```git clone https://github.com/mikehansonn/6-handed-poker.git```
+
 ```cd 6-handed-poker```
 
 ### 2. Backend Setup (FastAPI)
