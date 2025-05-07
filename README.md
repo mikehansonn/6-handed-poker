@@ -15,7 +15,7 @@ git clone https://github.com/mikehansonn/6-handed-poker.git
 cd 6-handed-poker
 
 ### 2. Backend Setup (FastAPI)
-python -m venv venv
+```python -m venv venv```
 .\venv\Scripts\activate
 
 cd backend
